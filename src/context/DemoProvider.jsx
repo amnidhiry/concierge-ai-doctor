@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
-import { LIVE_PATIENT, REVIEWING_PHYSICIAN } from '../domain/mockPanel.js'
+import { LIVE_PATIENT, REVIEWING_PHYSICIAN, findSampleCase } from '../domain/mockPanel.js'
 import { makeCase, makeIntake, normalizeDraft } from '../domain/models.js'
 import { requestSynthesis, resetTriage } from '../lib/api.js'
 
@@ -98,9 +98,59 @@ export function DemoProvider({ children }) {
     }))
   }, [])
 
+  /**
+   * Synthesis results for sample panel cases, keyed by case ID.
+   *
+   * Kept as a separate map rather than folded into `liveCase` on purpose. The
+   * live case owns the full Step 1–4 loop (intake → draft → physician edit →
+   * send); a sample case only ever gets a draft. Merging them would mean every
+   * consumer of the case model had to know which fields are meaningful for which
+   * kind of case, and the send flow would need guarding at each step.
+   *
+   * @type {[Record<string, {status: string, draft?: object, meta?: object, error?: object}>, Function]}
+   */
+  const [sampleSynthesis, setSampleSynthesis] = useState({})
+  const samplesInFlight = useRef(new Set())
+
+  const runSampleSynthesis = useCallback(async (caseId) => {
+    const sample = findSampleCase(caseId)
+    if (!sample || samplesInFlight.current.has(caseId)) return
+    samplesInFlight.current.add(caseId)
+
+    setSampleSynthesis((prev) => ({
+      ...prev,
+      [caseId]: { status: 'synthesizing', startedAt: Date.now() },
+    }))
+
+    const result = await requestSynthesis({
+      patientMessage: sample.intake.patientMessage,
+      chartText: sample.intake.chartText,
+    })
+
+    samplesInFlight.current.delete(caseId)
+
+    setSampleSynthesis((prev) => ({
+      ...prev,
+      [caseId]: result.ok
+        ? { status: 'done', draft: normalizeDraft(result.draft), meta: result.meta }
+        : { status: 'failed', error: result.error },
+    }))
+  }, [])
+
+  const clearSampleSynthesis = useCallback((caseId) => {
+    samplesInFlight.current.delete(caseId)
+    setSampleSynthesis((prev) => {
+      const next = { ...prev }
+      delete next[caseId]
+      return next
+    })
+  }, [])
+
   const resetDemo = useCallback(() => {
     inFlight.current = false
     setLiveCase(initialCase())
+    samplesInFlight.current.clear()
+    setSampleSynthesis({})
     // Also clear the server-side triage counters. The guard messages tell the
     // user to "reset the demo to start over", so Reset has to actually clear the
     // off-topic strikes and rate-limit window — otherwise that instruction is a
@@ -121,6 +171,9 @@ export function DemoProvider({ children }) {
       updatePhysicianResponse,
       sendPhysicianResponse,
       resetDemo,
+      sampleSynthesis,
+      runSampleSynthesis,
+      clearSampleSynthesis,
     }),
     [
       liveCase,
@@ -130,6 +183,9 @@ export function DemoProvider({ children }) {
       updatePhysicianResponse,
       sendPhysicianResponse,
       resetDemo,
+      sampleSynthesis,
+      runSampleSynthesis,
+      clearSampleSynthesis,
     ],
   )
 

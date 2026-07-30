@@ -4,10 +4,12 @@ import { MOCK_PANEL } from '../../domain/mockPanel.js'
 /**
  * The physician's panel.
  *
- * The live case sits at the top; everything below it is static scenery from
- * mockPanel.js, there to give the queue realistic density. Mock rows are visibly
- * marked and are not selectable — a demo where clicking a fake patient opens an
- * empty detail pane teaches the reviewer the wrong thing about what's real.
+ * Every row is selectable. Earlier versions made the sample rows inert on the
+ * grounds that only the live case carries real model output — but a panel where
+ * nothing opens reads as broken, which is a worse thing to show a demo audience
+ * than a clearly-labelled sample case. The honesty is preserved by labelling the
+ * rows and by the detail view stating plainly that no draft exists until one is
+ * generated, rather than by disabling the click.
  */
 
 const STATUS_META = {
@@ -20,23 +22,17 @@ const STATUS_META = {
   draft_intake: { tone: 'neutral', label: 'Intake' },
 }
 
-function Row({ name, meta, condition, summary, status, live, selected, onSelect }) {
+function Row({ name, meta, condition, summary, status, sample, selected, onSelect, badge }) {
   const statusMeta = STATUS_META[status] ?? STATUS_META.intake
-  const interactive = Boolean(live)
-
-  const base = 'w-full border-b border-dune px-4 py-3.5 text-left transition-colors'
-  const state = selected
-    ? 'bg-pulse-wash'
-    : interactive
-      ? 'hover:bg-dune/40'
-      : 'opacity-60'
-
-  const Tag = interactive ? 'button' : 'div'
 
   return (
-    <Tag
-      {...(interactive ? { type: 'button', onClick: onSelect, 'aria-current': selected } : {})}
-      className={`${base} ${state} ${interactive ? '' : 'cursor-default'}`}
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-current={selected ? 'true' : undefined}
+      className={`w-full border-b border-dune px-4 py-3.5 text-left transition-colors ${
+        selected ? 'bg-pulse-wash' : 'hover:bg-dune/40'
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -48,19 +44,24 @@ function Row({ name, meta, condition, summary, status, live, selected, onSelect 
         </Badge>
       </div>
       <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-umber">{summary}</p>
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <p className="font-mono text-[10px] uppercase tracking-label text-umber-light">{meta}</p>
-        {!interactive && (
+        {badge && (
+          <span className="font-mono text-[10px] uppercase tracking-label text-draft">
+            · {badge}
+          </span>
+        )}
+        {sample && (
           <span className="font-mono text-[10px] uppercase tracking-label text-umber-light">
-            · sample row
+            · sample
           </span>
         )}
       </div>
-    </Tag>
+    </button>
   )
 }
 
-export function PanelList({ liveCase, selectedId, onSelect }) {
+export function PanelList({ liveCase, sampleSynthesis = {}, selectedId, onSelect }) {
   const needsReview =
     MOCK_PANEL.filter((p) => p.status === 'awaiting_review').length +
     (liveCase.status === 'awaiting_review' ? 1 : 0)
@@ -82,31 +83,43 @@ export function PanelList({ liveCase, selectedId, onSelect }) {
 
       <div className="max-h-[70vh] overflow-y-auto">
         <Row
-          name={`${liveCase.patient.name}`}
+          name={liveCase.patient.name}
           condition="Second opinion · submitted this session"
           summary={liveSummary}
           status={liveCase.status}
           meta="Live case"
-          live
           selected={selectedId === liveCase.id}
           onSelect={() => onSelect(liveCase.id)}
         />
 
-        {MOCK_PANEL.map((p) => (
-          <Row
-            key={p.id}
-            name={`${p.name} · ${p.age}${p.sex}`}
-            condition={p.condition}
-            summary={p.summary}
-            status={p.status}
-            meta={p.waitingLabel}
-          />
-        ))}
+        {MOCK_PANEL.map((p) => {
+          const synth = sampleSynthesis[p.id]
+          return (
+            <Row
+              key={p.id}
+              name={`${p.name} · ${p.age}${p.sex}`}
+              condition={p.condition}
+              summary={p.summary}
+              status={p.status}
+              meta={p.waitingLabel}
+              sample
+              badge={
+                synth?.status === 'done'
+                  ? 'draft generated'
+                  : synth?.status === 'synthesizing'
+                    ? 'synthesizing'
+                    : null
+              }
+              selected={selectedId === p.id}
+              onSelect={() => onSelect(p.id)}
+            />
+          )
+        })}
       </div>
 
       <p className="border-t border-dune bg-dune/20 px-4 py-3 text-xs leading-relaxed text-umber">
-        Only the live case carries real model output. The rows below it are static sample data and
-        are not selectable.
+        Only the live case runs the full intake → review → send loop. The sample rows are static
+        records you can open and run a real synthesis on.
       </p>
     </div>
   )

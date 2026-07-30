@@ -4,6 +4,8 @@ import { useDemo } from '../../context/DemoProvider.jsx'
 import { PanelList } from '../../components/physician/PanelList.jsx'
 import { DraftEditor } from '../../components/physician/DraftEditor.jsx'
 import { JoinVideoVisitButton } from '../../components/physician/JoinVideoVisitButton.jsx'
+import { SampleCaseDetail } from '../../components/physician/SampleCaseDetail.jsx'
+import { findSampleCase } from '../../domain/mockPanel.js'
 import { DraftDocument } from '../../components/demo/DraftDocument.jsx'
 import { SynthesisProcessing } from '../../components/demo/SynthesisProcessing.jsx'
 import { ErrorPanel } from '../../components/demo/ErrorPanel.jsx'
@@ -20,10 +22,18 @@ export function PhysicianPage() {
     sendPhysicianResponse,
     retrySynthesis,
     resetDemo,
+    sampleSynthesis,
+    runSampleSynthesis,
+    clearSampleSynthesis,
   } = useDemo()
 
   const [selectedId, setSelectedId] = useState(liveCase.id)
   const sent = liveCase.status === 'physician_sent'
+
+  // A selected sample resolves to null for the live case, which is what switches
+  // the detail pane. Previously selectedId was tracked but never read here, so
+  // the pane always showed the live case regardless of what was clicked.
+  const selectedSample = selectedId === liveCase.id ? null : findSampleCase(selectedId)
 
   function handleSend() {
     sendPhysicianResponse()
@@ -59,10 +69,25 @@ export function PhysicianPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[340px_1fr]">
         <div>
-          <PanelList liveCase={liveCase} selectedId={selectedId} onSelect={setSelectedId} />
+          <PanelList
+            liveCase={liveCase}
+            sampleSynthesis={sampleSynthesis}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
         </div>
 
         <div className="space-y-6">
+          {selectedSample ? (
+            <SampleCaseDetail
+              sample={selectedSample}
+              synthesis={sampleSynthesis[selectedSample.id]}
+              onRunSynthesis={() => runSampleSynthesis(selectedSample.id)}
+              onClear={() => clearSampleSynthesis(selectedSample.id)}
+              physician={physician}
+            />
+          ) : (
+          <>
           {/* Case header */}
           <Card className="p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -162,6 +187,8 @@ export function PhysicianPage() {
                 </div>
               )}
             </>
+          )}
+          </>
           )}
         </div>
       </div>

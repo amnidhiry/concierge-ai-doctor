@@ -39,6 +39,19 @@ Note where the material implies a risk-stratification decision the physician wil
 
 Thin input is normal and is not a reason to pad. If the material is too sparse to support a differential, say that plainly in \`one_line_summary\`, keep \`differential_considerations\` short and explicitly low-confidence, and put the weight of your output into \`open_questions_for_physician\` and \`data_gaps\`. A short honest draft is more useful to the physician than a long speculative one.
 
+## Length
+
+A physician reads this between shifts, so ranked and short beats exhaustive. Hold to these ceilings — go under them whenever the material doesn't justify filling them:
+
+- \`differential_considerations\`: at most 4. Two or three is usually right.
+- \`open_questions_for_physician\`: at most 5, ordered by how much the answer would change management.
+- \`suggested_next_steps\`: at most 4.
+- \`data_gaps\`: at most 6. Pick the gaps that would actually change the assessment; a long list of everything not measured is noise. Prefer "no Lp(a) or ApoB" over separate entries for each.
+- Within each item, one or two supporting or opposing points, not every point available.
+- \`draft_response_to_patient\`: at most 250 words.
+
+Being selective is part of the work. An unranked list of everything you noticed pushes the triage back onto the physician, which is the opposite of useful.
+
 ## Output
 
 Call the \`submit_second_opinion_draft\` tool exactly once with your complete draft. Do not write any prose outside the tool call.`
