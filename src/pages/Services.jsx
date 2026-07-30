@@ -1,195 +1,215 @@
-import { Badge, Button, Card, Container, Eyebrow, SectionHeading } from '../components/ui/primitives.jsx'
-import { Reveal } from '../components/ui/Reveal.jsx'
+import { Button, Container } from '../components/ui/primitives.jsx'
+import {
+  Annotation,
+  CaseSheet,
+  MetaList,
+  MetaRow,
+  SectionRule,
+  SheetBody,
+  SheetHeader,
+  StatusLabel,
+} from '../components/case/CaseSheet.jsx'
+
+/**
+ * Services and pricing.
+ *
+ * Restructured from three rounded feature cards into a tariff: each tier is a
+ * document with its scope, inclusions, and — given how this is sold — an explicit
+ * list of what it does not cover. For a cash-pay clinical service the exclusions
+ * carry as much weight as the inclusions, so they sit on the document grid rather
+ * than in small print under a "not included" caption.
+ */
 
 const TIERS = [
   {
     name: 'Navigation',
     price: '$50–75',
     unit: 'per episode',
-    summary:
-      'One well-defined question, answered once. The entry point — and often all a patient actually needs.',
-    forWho: 'A patient holding a report they can\'t read, or facing one decision.',
+    lede: 'One well-defined question, answered once. The entry point, and often all that is needed.',
+    forWho: 'Someone holding a report they cannot read, or facing a single decision.',
     includes: [
       'One asynchronous question, one physician-reviewed answer',
-      'Plain-language translation of a lipid panel, calcium score, or imaging report',
-      'Guidance on what to ask at the next appointment',
-      'Referral direction — who to see, and how urgently',
+      'Plain-language reading of a lipid panel, calcium score, or imaging report',
+      'What to ask at the next appointment',
+      'Referral direction — who to see, and how soon',
     ],
-    excludes: ['Ongoing follow-up', 'Chart review across multiple records'],
-    highlight: false,
+    excludes: ['Ongoing follow-up', 'Review across multiple records'],
+    emphasis: false,
   },
   {
     name: 'Second Opinion',
     price: '$150–200',
     unit: 'per month',
-    summary:
-      'A specialist reads the whole record and gives an independent read on the plan — with follow-up while the decision is live.',
-    forWho:
-      'A patient in an active treatment decision who wants a second set of eyes before committing.',
+    lede: 'A cardiologist reads the whole record and gives an independent view, with follow-up while the decision is live.',
+    forWho: 'Someone in an active decision who wants a second read before committing.',
     includes: [
       'Full review of submitted records by a preventative cardiologist',
       'Structured written assessment: considerations, open questions, next steps',
-      'Follow-up exchanges through the month as the situation develops',
+      'Follow-up exchanges through the month as things develop',
       'One optional video visit',
     ],
     excludes: ['Prescribing', 'Ordering imaging or labs directly'],
-    highlight: true,
+    emphasis: true,
   },
   {
-    name: 'Async AI Concierge',
+    name: 'Async Concierge',
     price: '$300–500',
     unit: 'per month',
-    summary:
-      'A standing relationship with a physician who already knows the case. Ask anything, any time, and get a reviewed answer.',
-    forWho:
-      'A patient managing something complex or long-running who is tired of re-explaining their history.',
+    lede: 'A standing relationship with a physician who already knows the case. Ask anything; get a reviewed answer.',
+    forWho: 'Someone managing long-running risk who is tired of re-explaining their history.',
     includes: [
-      'Unlimited asynchronous questions with a target <48h turnaround',
-      'Continuity — the same physician, with the case history already loaded',
-      'Proactive check-ins around scans, results, and treatment milestones',
+      'Unlimited asynchronous questions, target under 48 hours',
+      'Continuity — the same physician, history already loaded',
+      'Proactive check-ins around results and treatment changes',
       'Video visits as needed',
-      'Records organized and kept current between visits',
+      'Records kept organised between appointments',
     ],
     excludes: ['Emergency care', 'Anything requiring physical examination'],
-    highlight: false,
+    emphasis: false,
   },
 ]
 
-function TierCard({ tier }) {
+function TierSheet({ tier }) {
   return (
-    <Card
-      className={`flex h-full flex-col p-6 sm:p-7 ${
-        tier.highlight ? 'border-pulse/40 shadow-lift ring-1 ring-pulse/15' : ''
-      }`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="font-display text-2xl leading-tight text-ink">{tier.name}</h3>
-        {tier.highlight && <Badge tone="pulse">Most common</Badge>}
-      </div>
+    <CaseSheet as="article" className={tier.emphasis ? 'border-oxblood' : undefined}>
+      <SheetHeader
+        label={tier.name}
+        title={
+          <span className="flex items-baseline gap-2">
+            <span className="text-title">{tier.price}</span>
+            <span className="font-mono text-micro uppercase tracking-label text-umber-light">
+              {tier.unit}
+            </span>
+          </span>
+        }
+        aside={tier.emphasis ? <StatusLabel tone="oxblood">Most common</StatusLabel> : null}
+      />
 
-      <div className="mt-5 flex items-baseline gap-2">
-        <p className="font-display text-3xl text-ink">{tier.price}</p>
-        <p className="font-mono text-xs uppercase tracking-label text-umber">{tier.unit}</p>
-      </div>
+      <SheetBody className="space-y-5">
+        <p className="max-w-measure text-meta leading-relaxed text-ink-muted">{tier.lede}</p>
 
-      <p className="mt-4 text-[15px] leading-relaxed text-umber">{tier.summary}</p>
+        <MetaList className="border-y border-dune">
+          <MetaRow label="Best for" tone="muted">
+            {tier.forWho}
+          </MetaRow>
+        </MetaList>
 
-      <div className="mt-5 rounded-md bg-dune/40 px-4 py-3">
-        <p className="field-label">Best for</p>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{tier.forWho}</p>
-      </div>
+        <div>
+          <p className="sheet-label">Includes</p>
+          <ul className="mt-2.5 space-y-1.5">
+            {tier.includes.map((item) => (
+              <li key={item} className="grid grid-cols-[0.75rem_1fr] gap-x-2.5">
+                <span aria-hidden="true" className="pt-1.5 text-oxblood">
+                  <svg viewBox="0 0 12 12" className="h-2 w-2" fill="none">
+                    <path
+                      d="M1.5 6.2 4.4 9 10.5 3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className="text-meta leading-relaxed text-ink">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <div className="mt-6 flex-1">
-        <p className="field-label">Includes</p>
-        <ul className="mt-3 space-y-2.5">
-          {tier.includes.map((item) => (
-            <li key={item} className="flex gap-2.5 text-[15px] leading-relaxed text-ink-muted">
-              <svg
-                viewBox="0 0 14 14"
-                aria-hidden="true"
-                className="mt-1.5 h-3 w-3 shrink-0 text-pulse"
-                fill="none"
-              >
-                <path
-                  d="M2 7.4 5.2 10.5 12 3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="doc-rule">
+          <p className="sheet-label">Not covered</p>
+          <ul className="mt-2 space-y-1">
+            {tier.excludes.map((item) => (
+              <li key={item} className="text-meta leading-relaxed text-umber">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        <p className="field-label mt-6">Not included</p>
-        <ul className="mt-3 space-y-2">
-          {tier.excludes.map((item) => (
-            <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-umber">
-              <span className="mt-2.5 h-px w-3 shrink-0 bg-dune-deep" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <Button
-        as="link"
-        to="/demo"
-        variant={tier.highlight ? 'primary' : 'outline'}
-        className="mt-7 w-full"
-      >
-        See this in the demo
-      </Button>
-    </Card>
+        <Button
+          as="link"
+          to="/demo"
+          variant={tier.emphasis ? 'primary' : 'outline'}
+          className="w-full"
+        >
+          See this in the demo
+        </Button>
+      </SheetBody>
+    </CaseSheet>
   )
 }
 
 export function Services() {
   return (
     <>
-      <section className="border-b border-dune bg-sandstone-raised py-16 sm:py-20">
-        <Container>
-          <Reveal>
-            <div className="max-w-3xl">
-              <Eyebrow tone="pulse">Services</Eyebrow>
-              <h1 className="mt-4 text-balance font-display text-4xl leading-[1.1] text-ink sm:text-5xl">
-                Three tiers, priced so the physician can afford to think.
-              </h1>
-              <p className="mt-6 text-lg leading-relaxed text-umber">
-                Cash-pay, no insurance, no prior authorization. Each tier defines a scope the
-                physician can actually deliver between shifts — which is why the answers are worth
-                paying for.
-              </p>
-            </div>
-          </Reveal>
+      <section className="border-b border-dune">
+        <Container className="py-12 lg:py-14">
+          <div className="max-w-measure">
+            <p className="sheet-label">Services</p>
+            <h1 className="mt-4 text-display-sm sm:text-display">
+              Three tiers, priced so the specialist can afford to think.
+            </h1>
+            <p className="mt-5 text-body-lg text-ink-muted">
+              Cash-pay. No insurance, no prior authorisation, no billing codes. Each tier defines a
+              scope a physician can actually deliver — which is why the answers are worth paying for.
+            </p>
+          </div>
         </Container>
       </section>
 
-      <section className="py-16 sm:py-20">
-        <Container>
-          <div className="grid gap-6 lg:grid-cols-3">
-            {TIERS.map((tier, i) => (
-              <Reveal key={tier.name} delay={i * 100} className="h-full">
-                <TierCard tier={tier} />
-              </Reveal>
+      <section>
+        <Container className="py-12">
+          <div className="grid items-start gap-6 lg:grid-cols-3 lg:gap-5">
+            {TIERS.map((tier) => (
+              <TierSheet key={tier.name} tier={tier} />
             ))}
           </div>
 
-          <Reveal delay={120}>
-            <div className="mt-14 grid gap-8 rounded-lg border border-dune bg-sandstone-raised p-6 sm:grid-cols-2 sm:p-8">
-              <div>
-                <SectionHeading
-                  eyebrow="What every tier shares"
-                  title="A physician signs off. Always."
-                />
-                <p className="mt-4 text-[15px] leading-relaxed text-umber">
-                  AI drafts; a licensed physician reviews, edits, and takes responsibility. There is
-                  no tier where an unreviewed model response reaches a patient — that isn't a
-                  feature difference, it's the floor.
-                </p>
-              </div>
-              <div className="space-y-4 sm:border-l sm:border-dune sm:pl-8">
-                {[
-                  ['Scope is explicit', 'Each tier says what it does not cover, in writing.'],
-                  [
-                    'No emergency care',
-                    'Async care is wrong for anything acute. Patients are routed, not held.',
-                  ],
-                  [
-                    'Records stay portable',
-                    'Everything submitted or produced can be exported by the patient.',
-                  ],
-                ].map(([title, body]) => (
-                  <div key={title}>
-                    <p className="text-[15px] font-medium text-ink">{title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-umber">{body}</p>
-                  </div>
-                ))}
-              </div>
+          <Annotation className="mt-6 max-w-prose">
+            Indicative pricing for this prototype. Nothing here is a live offer, and no payment is
+            processed anywhere in this build.
+          </Annotation>
+        </Container>
+      </section>
+
+      <section className="border-t border-dune bg-sandstone-raised">
+        <Container className="py-12 lg:py-14">
+          <SectionRule label="Common to every tier" />
+          <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-16">
+            <div>
+              <h2 className="text-title">A physician signs off. Always.</h2>
+              <p className="mt-4 max-w-measure text-body leading-relaxed text-ink-muted">
+                Software assembles the record; a licensed physician reviews it, edits it, and takes
+                responsibility for what is sent. There is no tier where an unreviewed model response
+                reaches a patient. That is not a difference between tiers — it is the floor.
+              </p>
             </div>
-          </Reveal>
+
+            <dl className="divide-y divide-dune border-t border-dune">
+              {[
+                [
+                  'Scope is explicit',
+                  'Each tier states what it does not cover, in writing, before you buy.',
+                ],
+                [
+                  'No emergency care',
+                  'Asynchronous review is wrong for anything acute. Those cases are redirected, not held.',
+                ],
+                [
+                  'Records stay yours',
+                  'Anything submitted or produced can be exported and taken elsewhere.',
+                ],
+              ].map(([term, detail]) => (
+                <div key={term} className="py-4">
+                  <dt className="text-meta font-medium text-ink">{term}</dt>
+                  <dd className="mt-1.5 max-w-measure text-meta leading-relaxed text-umber">
+                    {detail}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </Container>
       </section>
     </>

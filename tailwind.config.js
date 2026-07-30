@@ -1,34 +1,38 @@
 /**
- * Design system for AuricleHealth.
+ * Design tokens for AuricleHealth.
  *
- * Palette — sandstone and burnt sienna with red reserved for cardiac signal.
- * Preventative cardiology is the product, so warmth is doing work here: this is
- * long-horizon risk-reduction care, not acute intervention, and the surface
- * should read closer to a considered consultation than to an ER monitor.
+ * The visual concept is a specialist's case file: clinical, editorial, precise.
+ * Documents, rules, and annotations rather than floating cards; hierarchy through
+ * precision rather than scale.
  *
- *   ink      #2B211B  near-black warm brown — body text, dark panels
- *   umber    #7A6656  secondary text, metadata
- *   dune     #E3D7C6  dividers, hairlines, inactive fills
- *   sandstone#F7F2EA  page background
- *   pulse    #A54A26  burnt sienna — primary action, links, brand
- *   crimson  #A0242A  deep red — RESERVED: urgency and cardiac emphasis
- *   draft    #645A94  RESERVED: "AI-generated, pending physician review"
- *   verified #4E6B4A  RESERVED: physician-reviewed / sent
+ * TOKEN NAMING — deliberately unchanged from the previous palette even though the
+ * values are new. The demo flow carries ~300 class references across 30 files;
+ * renaming `sandstone` to `ivory` would churn all of it for no visual gain and
+ * real risk to a working flow. The names are role-based (`sandstone` = page
+ * surface, `umber` = secondary text, `dune` = rules) so they still describe their
+ * jobs accurately.
  *
- * Two reds would compete, so they're split by job: `pulse` (sienna) is every
- * ordinary action and carries the brand; `crimson` is only ever urgency or
- * cardiac emphasis. That keeps a red flag meaning something when it appears.
+ * PALETTE ROLES
+ *   sandstone         #F4EFE6  warm ivory — page background
+ *   sandstone.raised  #FDFBF6  pale cream — case-file surfaces
+ *   ink               #241B15  near-black warm brown — primary text
+ *   umber             #6F5F50  muted taupe — secondary text
+ *   dune              #DCD1C2  rules, hairlines, borders
+ *   pulse             #A84B23  burnt sienna — primary action, selective emphasis
+ *   oxblood           #6E1F24  clinical annotations, active states, document rules
+ *   crimson           #A32A25  urgency only (emergency routing, errors)
+ *   draft             #645A94  RESERVED: AI-generated, pending physician review
+ *   verified          #4E6B4A  RESERVED: physician-reviewed
  *
- * `draft` stays a cool indigo-violet against the warm neutrals — the contrast
- * is the point. Machine-generated output should not look like it belongs to the
- * brand palette, and the coolness reads as provisional next to the sienna.
+ * Two deep reds serve different jobs and are kept distinct: `oxblood` is
+ * annotation and structure at hairline scale, `crimson` is alarm in filled
+ * blocks. Collapsing them would make a genuine red flag stop reading as one.
  *
- * Every foreground token clears 4.5:1 against `sandstone` (pulse 5.2, umber
- * 4.9, crimson 6.8, draft 5.5, verified 5.3), so `pulse` is safe for body links
- * rather than decoration-only.
- *
- * Type — Newsreader (a restrained low-contrast serif) for display only, IBM
- * Plex Sans for body, IBM Plex Mono for clinical field labels and timestamps.
+ * CONTRAST — every text token clears WCGA AA 4.5:1 on `sandstone`:
+ *   ink 13.9 · umber 5.4 · umber.light 4.8 · pulse 5.0 · oxblood 9.8
+ *   crimson 6.0 · draft 5.5 · verified 5.3
+ * `umber.light` was #A08A76 (≈2.6:1) and was being used for small metadata text —
+ * that was an accessibility defect, now fixed.
  */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
@@ -36,60 +40,121 @@ export default {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#2B211B',
-          soft: '#3D2F26',
-          muted: '#544235',
+          DEFAULT: '#241B15',
+          soft: '#3A2E24',
+          muted: '#4E4034',
         },
         umber: {
-          DEFAULT: '#7A6656',
-          light: '#A08A76',
+          DEFAULT: '#6F5F50',
+          light: '#786553',
         },
         dune: {
-          DEFAULT: '#E3D7C6',
-          deep: '#CFBFA8',
+          DEFAULT: '#DCD1C2',
+          deep: '#C3B4A1',
+          faint: '#EAE3D8',
         },
         sandstone: {
-          DEFAULT: '#F7F2EA',
-          raised: '#FFFDF8',
+          DEFAULT: '#F4EFE6',
+          raised: '#FDFBF6',
+          sunk: '#EDE6DA',
         },
         pulse: {
-          DEFAULT: '#A54A26',
-          hover: '#8A3C1E',
-          wash: '#F6E7DE',
+          DEFAULT: '#A84B23',
+          hover: '#8C3D1B',
+          wash: '#F3E4DA',
+        },
+        oxblood: {
+          DEFAULT: '#6E1F24',
+          hover: '#571519',
+          wash: '#F1E4E3',
         },
         crimson: {
-          DEFAULT: '#A0242A',
-          wash: '#F8E6E4',
+          DEFAULT: '#A32A25',
+          wash: '#F7E7E5',
         },
         draft: {
           DEFAULT: '#645A94',
-          wash: '#EDEBF5',
+          wash: '#ECEAF4',
           deep: '#4B4275',
         },
         verified: {
           DEFAULT: '#4E6B4A',
-          wash: '#E9F0E6',
+          wash: '#E8EFE5',
         },
       },
+
       fontFamily: {
+        // Sans carries the site: body, navigation, controls, metadata, headings.
+        sans: ['"IBM Plex Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        // Serif is now selective — patient questions, physician quotations, pull
+        // quotes. It is no longer the default for headings (see index.css).
         display: ['Newsreader', 'Georgia', 'serif'],
-        sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
-      letterSpacing: {
-        label: '0.08em',
+
+      /**
+       * Restrained type scale. The old hero ran to 3.5rem; `display` tops out at
+       * 2.25rem, so hierarchy comes from weight, rule, and spacing rather than
+       * scale. Line heights are tuned for a 62–72ch measure.
+       */
+      fontSize: {
+        micro: ['0.6875rem', { lineHeight: '1.45', letterSpacing: '0.045em' }],
+        meta: ['0.8125rem', { lineHeight: '1.5' }],
+        body: ['0.9375rem', { lineHeight: '1.65' }],
+        'body-lg': ['1.0313rem', { lineHeight: '1.6' }],
+        subtitle: ['1.125rem', { lineHeight: '1.5' }],
+        title: ['1.3125rem', { lineHeight: '1.35', letterSpacing: '-0.006em' }],
+        'display-sm': ['1.625rem', { lineHeight: '1.22', letterSpacing: '-0.012em' }],
+        display: ['2.25rem', { lineHeight: '1.14', letterSpacing: '-0.018em' }],
+        quote: ['1.375rem', { lineHeight: '1.45' }],
       },
+
+      // Reduced from 0.08em. Small-caps labels remain, but tracked far less and
+      // used sparingly rather than as the label for everything.
+      letterSpacing: {
+        label: '0.045em',
+        tight: '-0.012em',
+      },
+
+      /**
+       * Small and deliberate. Overriding the scale rather than editing ~46
+       * existing `rounded-md`/`rounded-lg` classNames means the whole app tightens
+       * at once, and a component added later inherits it.
+       */
+      borderRadius: {
+        none: '0',
+        sm: '1px',
+        DEFAULT: '2px',
+        md: '2px',
+        lg: '3px',
+        xl: '4px',
+        '2xl': '5px',
+        full: '9999px',
+      },
+
       maxWidth: {
         prose: '68ch',
+        measure: '62ch',
+        note: '48ch',
       },
+
+      spacing: {
+        rule: '1px',
+        gutter: '1.75rem',
+      },
+
+      /**
+       * Shadows are near-absent by design — depth comes from rules and surface
+       * value, not elevation. `sheet` is a single hairline-equivalent lift for
+       * case-file surfaces; `lift` is reserved for genuine overlays (modals).
+       */
       boxShadow: {
-        card: '0 1px 2px rgba(43, 33, 27, 0.04), 0 8px 24px -16px rgba(43, 33, 27, 0.20)',
-        lift: '0 2px 4px rgba(43, 33, 27, 0.05), 0 16px 40px -20px rgba(43, 33, 27, 0.30)',
+        sheet: '0 1px 0 rgba(36, 27, 21, 0.04)',
+        lift: '0 1px 2px rgba(36, 27, 21, 0.06), 0 18px 44px -24px rgba(36, 27, 21, 0.28)',
+        card: '0 1px 0 rgba(36, 27, 21, 0.04)',
       },
+
       keyframes: {
-        // Used only by the Step 2 processing state and the triage typing
-        // indicator, where motion signals real work in flight. Both are disabled
-        // under prefers-reduced-motion (see src/index.css).
         sweep: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(300%)' },

@@ -13,96 +13,91 @@
   }
 
   body {
-    @apply bg-sandstone font-sans text-ink antialiased;
+    @apply bg-sandstone font-sans text-body text-ink antialiased;
     text-rendering: optimizeLegibility;
+    /* Old-style figures read as document type rather than UI type; tabular
+       alignment keeps clinical values in a column. */
+    font-variant-numeric: tabular-nums;
   }
 
+  /**
+   * Headings default to the sans face.
+   *
+   * Previously `h1, h2, h3 { @apply font-display }` made the serif the default
+   * for every heading in the app, which is what produced the oversized-editorial
+   * look. The serif is now opt-in via `font-display`, reserved for patient
+   * questions, physician quotations, and pull quotes.
+   */
   h1,
   h2,
-  h3 {
-    @apply font-display;
-    font-optical-sizing: auto;
+  h3,
+  h4 {
+    @apply font-sans font-medium text-ink;
+    text-wrap: balance;
   }
 
-  /* Keyboard focus is visible everywhere; mouse clicks don't get a ring. */
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Focus is visible on keyboard only, in sienna, with an offset that works on
+     both the ivory page and the pale case surfaces. */
   :focus-visible {
     @apply outline-none ring-2 ring-pulse ring-offset-2 ring-offset-sandstone;
   }
 
   textarea,
   input,
-  button {
+  button,
+  select {
     font: inherit;
   }
 }
 
 @layer components {
-  /* Small monospace field label. Used for clinical metadata — the kind of
-     label you'd see on a chart field rather than in marketing copy. */
+  /**
+   * Small-caps label. Retained for clinical metadata, where a chart-field label
+   * is the correct idiom — but tracked at 0.045em rather than 0.08em, and used
+   * sparingly instead of as the label for every block on the page.
+   */
   .field-label {
-    @apply font-mono text-[11px] uppercase tracking-label text-umber;
+    @apply font-mono text-micro uppercase text-umber;
+  }
+
+  /* Marketing-side label: sentence case, no tracking, quieter than field-label.
+     Used where a section needs naming without shouting. */
+  .sheet-label {
+    @apply font-mono text-micro uppercase tracking-label text-umber-light;
   }
 
   .hairline {
     @apply border-t border-dune;
   }
-}
 
-/**
- * LiveKit component theming.
- *
- * @livekit/components-styles ships a dark theme with its own accent colors and
- * rounded-pill controls — recognisably "LiveKit demo". Rather than fight it with
- * selector overrides (which break on every package update), remap the custom
- * properties it is built on. Scoped to `.lk-shell` so nothing leaks into the rest
- * of the app.
- */
-.lk-shell {
-  --lk-bg: #2b211b; /* ink */
-  --lk-bg2: #3d2f26; /* ink-soft */
-  --lk-bg3: #544235; /* ink-muted */
-  --lk-fg: #f7f2ea; /* sandstone */
-  --lk-fg2: #e3d7c6; /* dune */
-  --lk-fg3: #cfbfa8; /* dune-deep */
-  --lk-border-color: rgba(227, 215, 198, 0.16);
-  --lk-accent-bg: #a54a26; /* pulse */
-  --lk-accent2: #a54a26;
-  --lk-accent3: #8a3c1e;
-  --lk-accent-fg: #ffffff;
-  --lk-danger: #a0242a; /* crimson */
-  --lk-danger2: #a0242a;
-  --lk-danger-fg: #ffffff;
-  --lk-success: #4e6b4a; /* verified */
-  --lk-control-bg: rgba(227, 215, 198, 0.1);
-  --lk-control-hover-bg: rgba(227, 215, 198, 0.18);
-  --lk-control-fg: #f7f2ea;
-  --lk-border-radius: 0.375rem; /* match Tailwind rounded-md */
-  --lk-font-family: '"IBM Plex Sans"', system-ui, sans-serif;
-}
+  /**
+   * Document grid: a left vertical rule that clinical content hangs off, so case
+   * information reads as a record rather than as centered marketing copy.
+   */
+  .doc-rule {
+    @apply border-l border-dune pl-5;
+  }
 
-/* Tile chrome: square off LiveKit's default radius and use our border color, so
-   the video grid reads as part of the clinical surface rather than a widget. */
-.lk-shell .lk-participant-tile {
-  border-radius: 0.375rem;
-  overflow: hidden;
-  background: #3d2f26;
-}
+  .doc-rule-accent {
+    @apply border-l-2 border-oxblood pl-5;
+  }
 
-.lk-shell .lk-participant-name {
-  font-family: '"IBM Plex Mono"', ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  /* Marginal annotation — oxblood, small, hanging beside the content it notes. */
+  .annotation {
+    @apply font-mono text-micro leading-relaxed text-oxblood;
+  }
 
-/* The stage needs an explicit height for GridLayout to distribute tiles. */
-.lk-shell .lk-stage {
-  min-height: 0;
-}
-
-.lk-shell .lk-grid-layout {
-  height: 100%;
-  gap: 0.5rem;
+  /**
+   * Serif pull quote / patient question. The one place the editorial face earns
+   * its keep: a patient's own words, set apart from the clinical apparatus.
+   */
+  .patient-voice {
+    @apply font-display text-quote font-normal leading-snug text-ink;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -110,10 +105,8 @@
     scroll-behavior: auto;
   }
 
-  /* Kill every animation and transition rather than tuning them individually,
-     so a component added later can't reintroduce motion by accident. The
-     Step 2 processing state stays legible without motion because it also
-     reports elapsed seconds as text. */
+  /* Kill every animation and transition rather than tuning them individually, so
+     a component added later can't reintroduce motion by accident. */
   *,
   *::before,
   *::after {
@@ -122,4 +115,57 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/**
+ * LiveKit component theming.
+ *
+ * @livekit/components-styles ships a dark theme with its own accents and
+ * pill-shaped controls. Rather than fight it with selector overrides (which break
+ * on package updates), remap the custom properties it is built on. Scoped to
+ * `.lk-shell` so nothing leaks into the rest of the app.
+ */
+.lk-shell {
+  --lk-bg: #241b15;
+  --lk-bg2: #3a2e24;
+  --lk-bg3: #4e4034;
+  --lk-fg: #f4efe6;
+  --lk-fg2: #dcd1c2;
+  --lk-fg3: #c3b4a1;
+  --lk-border-color: rgba(220, 209, 194, 0.16);
+  --lk-accent-bg: #a84b23;
+  --lk-accent2: #a84b23;
+  --lk-accent3: #8c3d1b;
+  --lk-accent-fg: #ffffff;
+  --lk-danger: #a32a25;
+  --lk-danger2: #a32a25;
+  --lk-danger-fg: #ffffff;
+  --lk-success: #4e6b4a;
+  --lk-control-bg: rgba(220, 209, 194, 0.1);
+  --lk-control-hover-bg: rgba(220, 209, 194, 0.18);
+  --lk-control-fg: #f4efe6;
+  --lk-border-radius: 2px;
+  --lk-font-family: '"IBM Plex Sans"', system-ui, sans-serif;
+}
+
+.lk-shell .lk-participant-tile {
+  border-radius: 2px;
+  overflow: hidden;
+  background: #3a2e24;
+}
+
+.lk-shell .lk-participant-name {
+  font-family: '"IBM Plex Mono"', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.lk-shell .lk-stage {
+  min-height: 0;
+}
+
+.lk-shell .lk-grid-layout {
+  height: 100%;
+  gap: 0.5rem;
 }

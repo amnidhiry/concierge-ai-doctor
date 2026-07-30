@@ -1,67 +1,95 @@
 import { Link } from 'react-router-dom'
 import { Container } from '../ui/primitives.jsx'
+import { MetaList, MetaRow } from '../case/CaseSheet.jsx'
 
-const COLUMNS = [
-  {
-    heading: 'Product',
-    links: [
-      { to: '/services', label: 'Services & pricing' },
-      { to: '/demo', label: 'Interactive demo' },
-    ],
-  },
-  {
-    heading: 'For clinicians',
-    links: [
-      { to: '/for-physicians', label: 'Run a panel' },
-      { to: '/demo/physician', label: 'Physician dashboard' },
-    ],
-  },
+/**
+ * Footer as a colophon.
+ *
+ * Previously a dark four-column link farm with the disclaimer as small print at
+ * the bottom. Now it stays on the ivory page — a footer that inverts to near-black
+ * is a SaaS convention that fights the document feel — and the prototype
+ * disclosures are the primary content rather than a legal afterthought. For a
+ * healthcare service, being precise about what this is *not* is a trust signal,
+ * so it gets a labelled definition list instead of a grey sentence.
+ */
+
+const NAV = [
+  { to: '/services', label: 'Services and pricing' },
+  { to: '/for-physicians', label: 'For physicians' },
+  { to: '/demo', label: 'Start a specialist review' },
+]
+
+const DISCLOSURES = [
+  [
+    'Status',
+    'Prototype. Built for demonstration, not in clinical use, and not accepting real patients.',
+  ],
+  [
+    'Data',
+    'No real patient records. Everything entered is synthetic, and nothing persists past a page refresh.',
+  ],
+  [
+    'Not medical advice',
+    'Nothing produced here is medical advice or a diagnosis. AI output is labelled as a draft until a physician has reviewed it.',
+  ],
+  [
+    'Physician identity',
+    'The reviewing physician shown throughout is a placeholder. No real clinician’s name or credentials appear on this site.',
+  ],
+  [
+    'Compliance',
+    'Not HIPAA/BAA-grade infrastructure. No authentication, no audit trail, no encryption guarantees.',
+  ],
 ]
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-dune bg-ink text-dune-deep">
-      <Container className="py-14">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="lg:col-span-2">
-            <p className="font-display text-xl text-sandstone">
-              Auricle<span className="italic text-dune-deep">Health</span>
+    <footer className="border-t border-ink bg-sandstone">
+      <Container className="py-12">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] lg:gap-16">
+          <div>
+            <p className="font-display text-subtitle text-ink">
+              Auricle<span className="italic">Health</span>
             </p>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed">
-              Cash-pay asynchronous preventative cardiology. A licensed physician reviews, edits,
-              and owns every response that reaches a patient.
+            <p className="mt-3 max-w-note text-meta leading-relaxed text-umber">
+              Asynchronous preventative cardiology. A named specialist reads your records and writes
+              the response.
             </p>
-          </div>
 
-          {COLUMNS.map((column) => (
-            <div key={column.heading}>
-              <p className="field-label text-umber-light">{column.heading}</p>
-              <ul className="mt-4 space-y-2.5">
-                {column.links.map((link) => (
+            <nav aria-label="Footer" className="mt-7">
+              <ul className="space-y-2">
+                {NAV.map((link) => (
                   <li key={link.to}>
                     <Link
                       to={link.to}
-                      className="text-sm text-dune-deep transition-colors hover:text-sandstone"
+                      className="text-meta text-ink-muted underline decoration-dune-deep underline-offset-4 transition-colors hover:text-ink hover:decoration-pulse"
                     >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
-          ))}
+            </nav>
+          </div>
+
+          <div>
+            <p className="sheet-label">Prototype disclosures</p>
+            <MetaList className="mt-4 border-t border-dune">
+              {DISCLOSURES.map(([label, detail]) => (
+                <MetaRow key={label} label={label} tone="muted">
+                  {detail}
+                </MetaRow>
+              ))}
+            </MetaList>
+          </div>
         </div>
 
-        <div className="mt-12 border-t border-ink-muted pt-8">
-          <p className="max-w-3xl text-xs leading-relaxed text-umber-light">
-            <strong className="font-medium text-dune-deep">Prototype.</strong> This is a demo-day
-            build, not a clinical product. It is not HIPAA-compliant infrastructure, it holds no
-            real patient data, and nothing it produces is medical advice. AI output is always
-            labelled as a draft pending physician review. Any case material entered here should be
-            synthetic.
-          </p>
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-label text-umber-light">
+        <div className="mt-10 flex flex-wrap items-baseline justify-between gap-3 border-t border-dune pt-5">
+          <p className="font-mono text-micro uppercase tracking-label text-umber-light">
             © {new Date().getFullYear()} AuricleHealth
+          </p>
+          <p className="font-mono text-micro text-umber-light">
+            If you are having symptoms now, contact emergency services.
           </p>
         </div>
       </Container>

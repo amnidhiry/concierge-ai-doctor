@@ -141,6 +141,8 @@ src/context/DemoProvider.jsx  Session state for Steps 1–4
 src/components/ui/            Primitives + AiDraftBadge
 src/components/demo/          Intake, processing, draft document, errors
 src/components/physician/     Panel, editor, video placeholder
+src/components/case/          Case-sheet primitives (sheet, meta rows, rules, status)
+src/components/marketing/     Homepage sections + hero specialist-review artifact
 src/components/video/         LiveKit call UI (lazy-loaded chunk)
 src/pages/                    Marketing pages
 src/pages/demo/               Demo flow routes
@@ -160,17 +162,28 @@ Defined in `tailwind.config.js` before any component was written, so nothing inv
 
 | Token | Hex | Role |
 |---|---|---|
-| `ink` | `#12232B` | Deep blue-graphite — body text, dark panels |
-| `slate` | `#5B7482` | Secondary text, metadata |
-| `mist` | `#DEE7EA` | Dividers, hairlines |
-| `paper` | `#F6F8F9` | Page background (cool off-white) |
-| `pulse` | `#14587F` | Primary action, links |
-| `draft` | `#6D5BA6` | *Reserved:* AI-generated, pending review |
-| `verified` | `#2F6B4F` | *Reserved:* physician-reviewed |
+| `sandstone` | `#F4EFE6` | Warm ivory — page background |
+| `sandstone.raised` | `#FDFBF6` | Pale cream — case-file surfaces |
+| `ink` | `#241B15` | Near-black warm brown — primary text |
+| `umber` | `#6F5F50` | Muted taupe — secondary text |
+| `dune` | `#DCD1C2` | Rules, hairlines, borders |
+| `pulse` | `#A84B23` | Burnt sienna — primary action, selective emphasis |
+| `oxblood` | `#6E1F24` | Clinical annotations, active states, document rules |
+| `crimson` | `#A32A25` | *Reserved:* urgency only (emergency routing, errors) |
+| `draft` | `#645A94` | *Reserved:* AI-generated, pending physician review |
+| `verified` | `#4E6B4A` | *Reserved:* physician-reviewed |
+
+Token *names* are unchanged from the earlier palette even though every value is new — the demo carries ~300 class references across 30 files, and the names are role-based (`sandstone` = page surface, `dune` = rules) so they still describe their jobs. Two deep reds are kept distinct on purpose: `oxblood` is annotation and structure at hairline scale, `crimson` is alarm in filled blocks. Collapsing them would stop a red flag reading as one.
+
+Every text token clears WCAG AA 4.5:1 on both the page background and the case surface, verified by script. `umber.light` was previously `#A08A76` (≈2.6:1) while being used for small metadata text — that was a real defect, now fixed.
+
+**Corner radii** are 1–4px, set by overriding Tailwind's `borderRadius` scale rather than editing ~46 existing `rounded-md`/`rounded-lg` classNames. The whole app tightened at once and anything added later inherits it.
 
 Type: **Newsreader** (display only) + **IBM Plex Sans** (body) + **IBM Plex Mono** (clinical field labels, timestamps). Cool and low-chroma throughout, deliberately avoiding warm-cream/terracotta and dark-mode-plus-neon defaults — this product asks people to trust it with serious decisions.
 
-**Motion** appears in exactly two places: scroll reveals on marketing sections, and the Step 2 processing state. Both are adapted from [React Bits](https://reactbits.dev) patterns (`AnimatedContent`/`FadeContent`) and reimplemented as ~40 lines of IntersectionObserver plus CSS — no animation dependency, and they inherit the design tokens. No particle, glitch, or scramble effects. `prefers-reduced-motion` is handled globally in `src/index.css` (all animation and transition disabled), so a component added later can't reintroduce motion by accident.
+**Typography.** The sans face (IBM Plex Sans) carries body copy, navigation, controls, metadata, and *all headings*. The serif (Newsreader) is selective — patient questions, the physician's philosophy, pull quotes, and the wordmark. Previously `h1, h2, h3 { font-display }` in the base layer made the serif the default for every heading, which is what produced the oversized-editorial look; it is now opt-in. The display size tops out at `2.25rem` (was `3.5rem`), so hierarchy comes from weight, rule, and spacing rather than scale. Small-caps labels are tracked at `0.045em` (was `0.08em`) and used sparingly.
+
+**Motion** now appears in one place: the Step 2 processing state, where it signals a real in-flight request. The scroll-reveal component was removed — twenty fade-ups across the marketing pages was motion doing decorative work, and the composition holds without it. `prefers-reduced-motion` is handled globally in `src/index.css` (all animation and transition disabled), so a component added later can't reintroduce motion by accident.
 
 The chat UI follows the [`chatscope/chat-ui-kit-react`](https://github.com/chatscope/chat-ui-kit-react) component split (`MessageList` / `Message` / `MessageInput`) but is built here — the component tree was worth borrowing, the default CSS was not.
 

@@ -2,13 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Container, Button } from '../ui/primitives.jsx'
 
+/**
+ * Wordmark. The serif stays here — a wordmark is a mark, not a headline, and this
+ * is one of the few places the editorial face is doing brand work rather than
+ * shouting hierarchy.
+ */
 export function Logo({ tone = 'dark' }) {
   const text = tone === 'light' ? 'text-sandstone' : 'text-ink'
-  const mark = tone === 'light' ? 'text-dune-deep' : 'text-pulse'
+  const mark = tone === 'light' ? 'text-dune' : 'text-oxblood'
   return (
-    <Link to="/" className="group inline-flex items-baseline gap-2">
-      {/* ECG trace — the mark and the `pulse` token share the cardiology motif. */}
-      <svg viewBox="0 0 16 16" aria-hidden="true" className={`h-4 w-4 self-center ${mark}`}>
+    <Link to="/" className="inline-flex items-baseline gap-2">
+      {/* ECG trace — the one figurative mark in the identity. */}
+      <svg viewBox="0 0 16 16" aria-hidden="true" className={`h-3.5 w-3.5 self-center ${mark}`}>
         <path
           d="M1 8h3l1.6-4.4L8.4 13l1.9-5H15"
           fill="none"
@@ -18,17 +23,19 @@ export function Logo({ tone = 'dark' }) {
           strokeLinejoin="round"
         />
       </svg>
-      <span className={`font-display text-[19px] leading-none ${text}`}>
-        Auricle<span className="italic text-pulse">Health</span>
+      <span className={`font-display text-[1.0625rem] leading-none tracking-tight ${text}`}>
+        Auricle<span className="italic">Health</span>
       </span>
     </Link>
   )
 }
 
-const LINKS = [
-  { to: '/services', label: 'Services' },
-  { to: '/for-physicians', label: 'For physicians' },
-]
+/**
+ * Patient-first navigation. "For physicians" is deliberately a quiet text link
+ * rather than a peer nav item — the supply side of the business is not what a
+ * patient landing here needs to parse first.
+ */
+const PATIENT_LINKS = [{ to: '/services', label: 'Services' }]
 
 export function SiteNav() {
   const [open, setOpen] = useState(false)
@@ -38,27 +45,42 @@ export function SiteNav() {
   useEffect(() => setOpen(false), [location.pathname])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-dune bg-sandstone/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-dune bg-sandstone/92 backdrop-blur-md">
       <Container>
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex h-14 items-center justify-between gap-4">
           <Logo />
 
-          <nav className="hidden items-center gap-1 md:flex">
-            {LINKS.map((link) => (
+          <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
+            {PATIENT_LINKS.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-2 text-[15px] transition-colors ${
-                    isActive ? 'text-pulse' : 'text-ink-muted hover:text-ink'
+                  `text-meta transition-colors ${
+                    isActive
+                      ? 'text-ink underline decoration-oxblood decoration-2 underline-offset-[6px]'
+                      : 'text-umber hover:text-ink'
                   }`
                 }
               >
                 {link.label}
               </NavLink>
             ))}
-            <Button as="link" to="/demo" variant="primary" className="ml-2">
-              Open the demo
+            <NavLink
+              to="/for-physicians"
+              className={({ isActive }) =>
+                `text-meta transition-colors ${
+                  isActive
+                    ? 'text-ink underline decoration-oxblood decoration-2 underline-offset-[6px]'
+                    : 'text-umber-light hover:text-ink'
+                }`
+              }
+            >
+              For physicians
+            </NavLink>
+            <span aria-hidden="true" className="h-4 w-px bg-dune" />
+            <Button as="link" to="/demo" variant="primary">
+              Start a review
             </Button>
           </nav>
 
@@ -70,21 +92,11 @@ export function SiteNav() {
             aria-controls="mobile-nav"
             aria-label={open ? 'Close menu' : 'Open menu'}
           >
-            <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden="true">
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden="true">
               {open ? (
-                <path
-                  d="M5 5l10 10M15 5L5 15"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
+                <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               ) : (
-                <path
-                  d="M3 6h14M3 10h14M3 14h14"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
+                <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               )}
             </svg>
           </button>
@@ -93,22 +105,22 @@ export function SiteNav() {
 
       {open && (
         <div id="mobile-nav" className="border-t border-dune bg-sandstone md:hidden">
-          <Container className="flex flex-col gap-1 py-4">
-            {LINKS.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  `rounded-md px-3 py-2.5 text-[15px] ${
-                    isActive ? 'bg-pulse-wash text-pulse' : 'text-ink-muted'
-                  }`
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-            <Button as="link" to="/demo" variant="primary" className="mt-2 w-full">
-              Open the demo
+          <Container className="flex flex-col py-3">
+            <nav aria-label="Main" className="flex flex-col divide-y divide-dune">
+              {[...PATIENT_LINKS, { to: '/for-physicians', label: 'For physicians' }].map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    `py-3 text-meta ${isActive ? 'text-ink' : 'text-umber'}`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+            <Button as="link" to="/demo" variant="primary" className="mt-4 w-full">
+              Start a review
             </Button>
           </Container>
         </div>
