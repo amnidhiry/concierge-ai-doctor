@@ -3,20 +3,25 @@
  *
  * These are scenery: they give the dashboard the density of a real panel so the
  * one live case doesn't sit alone on an empty screen. Only the live case
- * (Steps 1–4) carries real model output. Every name and detail here is invented.
+ * (Steps 1–4) carries real model output.
  *
  * Cases are drawn from preventative cardiology — risk stratification, lipid and
  * Lp(a) questions, calcium scores, family history — rather than acute cardiology.
  * The product is asynchronous, so anything acute belongs in an emergency
  * department, and the panel should reflect that.
+ *
+ * The names are the Beatles (including Pete Best and Stuart Sutcliffe), kept in
+ * initial-surname form so the list still scans as a chart rather than a punchline.
+ * All six are male, so the clinical details are written accordingly. Every detail
+ * is invented.
  */
 
 export const MOCK_PANEL = [
   {
     id: 'pt-2291',
-    name: 'D. Okafor',
-    age: 52,
-    sex: 'F',
+    name: 'J. Lennon',
+    age: 54,
+    sex: 'M',
     condition: 'Elevated Lp(a) — risk stratification',
     plan: 'Second Opinion',
     status: 'sent',
@@ -26,7 +31,7 @@ export const MOCK_PANEL = [
   },
   {
     id: 'pt-2284',
-    name: 'R. Villanueva',
+    name: 'P. McCartney',
     age: 61,
     sex: 'M',
     condition: 'CAC score 240 — statin decision',
@@ -38,9 +43,9 @@ export const MOCK_PANEL = [
   },
   {
     id: 'pt-2277',
-    name: 'K. Bergström',
-    age: 44,
-    sex: 'F',
+    name: 'G. Harrison',
+    age: 47,
+    sex: 'M',
     condition: 'Premature family history — first workup',
     plan: 'Navigation',
     status: 'awaiting_review',
@@ -50,7 +55,7 @@ export const MOCK_PANEL = [
   },
   {
     id: 'pt-2265',
-    name: 'A. Haddad',
+    name: 'R. Starr',
     age: 67,
     sex: 'M',
     condition: 'Post-stent secondary prevention',
@@ -62,19 +67,20 @@ export const MOCK_PANEL = [
   },
   {
     id: 'pt-2258',
-    name: 'J. Whitfield',
-    age: 38,
-    sex: 'F',
-    condition: 'Hypertension in pregnancy — follow-up',
+    name: 'P. Best',
+    age: 58,
+    sex: 'M',
+    condition: 'Metabolic risk — first assessment',
     plan: 'Second Opinion',
     status: 'intake',
     waitingLabel: 'Intake incomplete',
-    summary: 'History of pre-eclampsia, wants long-term cardiovascular risk plan. Records not yet uploaded.',
+    summary:
+      'A1c 6.1 with central adiposity, wants a long-term cardiovascular plan. Records not yet uploaded.',
   },
   {
     id: 'pt-2249',
-    name: 'M. Petrov',
-    age: 55,
+    name: 'S. Sutcliffe',
+    age: 51,
     sex: 'M',
     condition: 'Statin intolerance — alternatives',
     plan: 'Navigation',
