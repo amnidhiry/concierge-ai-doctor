@@ -198,6 +198,14 @@ export function WhoReviews() {
             registration="Registration number — to be supplied"
             focus={['Lipids and Lp(a)', 'Coronary calcium', 'Premature family history']}
             philosophy="Most of the people who write to me do not need a new test. They need someone to read the ones they already have, in order, against their actual history."
+            // To add a portrait: save a licensed image to /public and pass
+            //   photoUrl="/dr-imani-reyes.jpg"
+            // Self-host rather than hotlinking a stock-library URL — those are
+            // unlicensed for this use and are usually signed links that expire.
+            // Free options whose licenses do permit commercial use: Unsplash,
+            // Pexels. Keep `placeholder` set either way: Imani Reyes is a
+            // fictional persona, and the visible marker is what stops a portrait
+            // from making the credentials look verified.
             placeholder
           />
 
