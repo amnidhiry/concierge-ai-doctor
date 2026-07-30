@@ -1,10 +1,11 @@
 /**
- * Vite plugin exposing the two API routes the demo needs, during
- * `npm run dev` and `npm run preview`:
+ * Vite plugin exposing the API routes the demo needs, during `npm run dev` and
+ * `npm run preview`:
  *
- *   POST /api/triage      — Step 1 conversational intake agent
- *   POST /api/synthesize   — Step 2 second-opinion synthesis
- *   POST /api/triage/reset — clears one client's triage counters
+ *   POST /api/triage         — Step 1 conversational intake agent
+ *   POST /api/synthesize     — Step 2 second-opinion synthesis
+ *   POST /api/triage/reset   — clears one client's triage counters
+ *   POST /api/livekit-token  — issues a video-visit access token
  *
  * Why a server-side proxy at all: the Anthropic API cannot be called safely
  * from browser JS. Doing so requires the
@@ -41,6 +42,7 @@ import {
   recordTriageCall,
   resetClient,
 } from './guards.js'
+import { TOKEN_TTL_SECONDS, mintToken, validateTokenRequest } from './livekitToken.js'
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6'
 const DEFAULT_MAX_TOKENS = 8000
@@ -210,7 +212,7 @@ function extractToolInput(response, toolName) {
 // ---------------------------------------------------------------------------
 
 async function handleTriage(req, res, config) {
-  if (!config.apiKey) return missingKeyResponse(res)
+  if (!config.anthropic.apiKey) return missingKeyResponse(res)
 
   const key = clientKey(req)
 
@@ -220,7 +222,7 @@ async function handleTriage(req, res, config) {
     // per-message limit is 2k characters.
     body = await readBody(req, LIMITS.MAX_MESSAGE_CHARS * 4 + LIMITS.MAX_TRANSCRIPT_CHARS * 2)
   } catch (err) {
-    const described = describeError(err, config.model)
+    const described = describeError(err, config.anthropic.model)
     return sendJson(res, described.status, { error: described })
   }
 
@@ -239,12 +241,12 @@ async function handleTriage(req, res, config) {
     return sendJson(res, blocked.status, { error: blocked })
   }
 
-  const client = new Anthropic({ apiKey: config.apiKey })
+  const client = new Anthropic({ apiKey: config.anthropic.apiKey })
   recordTriageCall(key)
 
   try {
     const response = await client.messages.create({
-      model: config.model,
+      model: config.anthropic.model,
       // Deliberately much smaller than the synthesis cap: replies are meant to
       // be under 90 words, and a low ceiling is a cost control that also keeps
       // the agent from drifting into essays.
@@ -303,7 +305,7 @@ async function handleTriage(req, res, config) {
     })
   } catch (err) {
     console.error('[triage] failed:', err?.message || err)
-    const described = describeError(err, config.model)
+    const described = describeError(err, config.anthropic.model)
     return sendJson(res, described.status, { error: described })
   }
 }
@@ -313,13 +315,13 @@ async function handleTriage(req, res, config) {
 // ---------------------------------------------------------------------------
 
 async function handleSynthesize(req, res, config) {
-  if (!config.apiKey) return missingKeyResponse(res)
+  if (!config.anthropic.apiKey) return missingKeyResponse(res)
 
   let body
   try {
     body = await readBody(req)
   } catch (err) {
-    const described = describeError(err, config.model)
+    const described = describeError(err, config.anthropic.model)
     return sendJson(res, described.status, { error: described })
   }
 
@@ -344,13 +346,13 @@ async function handleSynthesize(req, res, config) {
     })
   }
 
-  const client = new Anthropic({ apiKey: config.apiKey })
+  const client = new Anthropic({ apiKey: config.anthropic.apiKey })
   const startedAt = Date.now()
 
   try {
     const response = await client.messages.create({
-      model: config.model,
-      max_tokens: config.maxTokens,
+      model: config.anthropic.model,
+      max_tokens: config.anthropic.maxTokens,
       // Sonnet 4.6 runs without thinking when `thinking` is omitted, but being
       // explicit documents the intent and keeps behavior stable if the model is
       // swapped via ANTHROPIC_MODEL for one where adaptive is the default.
@@ -391,8 +393,81 @@ async function handleSynthesize(req, res, config) {
     })
   } catch (err) {
     console.error('[synthesize] failed:', err?.message || err)
-    const described = describeError(err, config.model)
+    const described = describeError(err, config.anthropic.model)
     return sendJson(res, described.status, { error: described })
+  }
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/livekit-token — video visit access token
+// ---------------------------------------------------------------------------
+
+async function handleLivekitToken(req, res, config) {
+  const { url, apiKey, apiSecret } = config.livekit
+
+  if (!url || !apiKey || !apiSecret) {
+    const missing = [
+      !url && 'LIVEKIT_URL',
+      !apiKey && 'LIVEKIT_API_KEY',
+      !apiSecret && 'LIVEKIT_API_SECRET',
+    ].filter(Boolean)
+    return sendJson(res, 500, {
+      error: {
+        kind: 'config',
+        message: `Video visits are not configured — missing ${missing.join(', ')}. Add them to .env and restart the dev server.`,
+      },
+    })
+  }
+
+  let body
+  try {
+    body = await readBody(req, 8_000)
+  } catch (err) {
+    const described = describeError(err, config.anthropic.model)
+    return sendJson(res, described.status, { error: described })
+  }
+
+  // Room name is derived from the case ID rather than accepted verbatim, so a
+  // client can't request an arbitrary room and land in another case's visit.
+  const validated = validateTokenRequest({
+    caseId: body.caseId,
+    role: body.role,
+    displayName: body.displayName,
+  })
+
+  if (validated.error) {
+    return sendJson(res, validated.error.status, { error: validated.error })
+  }
+
+  try {
+    const token = await mintToken({
+      apiKey,
+      apiSecret,
+      roomName: validated.roomName,
+      identity: validated.identity,
+      name: validated.name,
+    })
+
+    return sendJson(res, 200, {
+      token,
+      // Returned here so the client needs no VITE_LIVEKIT_URL: all three LiveKit
+      // values stay server-side, and the browser learns only the one non-secret
+      // value it needs, when it needs it.
+      url,
+      room: validated.roomName,
+      identity: validated.identity,
+      name: validated.name,
+      expiresInSeconds: TOKEN_TTL_SECONDS,
+    })
+  } catch (err) {
+    console.error('[livekit] token generation failed:', err?.message || err)
+    return sendJson(res, 500, {
+      error: {
+        kind: 'token_failed',
+        message:
+          'Could not generate a video access token. Check LIVEKIT_API_KEY and LIVEKIT_API_SECRET.',
+      },
+    })
   }
 }
 
@@ -427,37 +502,65 @@ function attach(server, config) {
   )
   server.middlewares.use('/api/triage', route(handleTriage, config))
   server.middlewares.use('/api/synthesize', route(handleSynthesize, config))
+  server.middlewares.use('/api/livekit-token', route(handleLivekitToken, config))
 }
 
 /** @param {{ apiKey?: string, model?: string, maxTokens?: number, keySource?: string | null }} env */
-export function anthropicProxy(env = {}) {
+/**
+ * @param {{
+ *   anthropic?: { apiKey?: string, model?: string, maxTokens?: number, keySource?: string },
+ *   livekit?: { url?: string, apiKey?: string, apiSecret?: string, keySource?: string },
+ * }} env
+ */
+export function devApi(env = {}) {
   const config = {
-    apiKey: env.apiKey || '',
-    model: env.model || DEFAULT_MODEL,
-    maxTokens: Number(env.maxTokens) || DEFAULT_MAX_TOKENS,
-    keySource: env.keySource || null,
+    anthropic: {
+      apiKey: env.anthropic?.apiKey || '',
+      model: env.anthropic?.model || DEFAULT_MODEL,
+      maxTokens: Number(env.anthropic?.maxTokens) || DEFAULT_MAX_TOKENS,
+      keySource: env.anthropic?.keySource || 'not set',
+    },
+    livekit: {
+      url: env.livekit?.url || '',
+      apiKey: env.livekit?.apiKey || '',
+      apiSecret: env.livekit?.apiSecret || '',
+      keySource: env.livekit?.keySource || 'not set',
+    },
   }
 
   return {
-    name: 'auricle-anthropic-proxy',
+    name: 'auricle-dev-api',
     configureServer(server) {
-      if (!config.apiKey) {
-        server.config.logger.warn(
+      const log = server.config.logger
+
+      if (!config.anthropic.apiKey) {
+        log.warn(
           '[auricle] ANTHROPIC_API_KEY is not set — triage and synthesis will return a config error. Copy .env.example to .env and add your key.',
         )
       } else {
-        server.config.logger.info(
-          `[auricle] API ready: POST /api/triage, /api/synthesize (model: ${config.model})`,
+        log.info(
+          `[auricle] anthropic ready: POST /api/triage, /api/synthesize (model: ${config.anthropic.model})`,
         )
-        // Named explicitly because Vite picks up a shell-exported key even with
-        // no .env file — without this line you can't tell which key is billing.
-        server.config.logger.info(
-          `[auricle] API key loaded from: ${config.keySource ?? 'unknown source'}`,
-        )
-        server.config.logger.info(
+        // Sources are named explicitly because Vite picks up a shell-exported
+        // value even with no .env file — without this you can't tell which
+        // credential is actually in use.
+        log.info(`[auricle] anthropic key from: ${config.anthropic.keySource}`)
+        log.info(
           `[auricle] triage guards: ${LIMITS.MAX_TURNS} turns/session, ${LIMITS.MAX_PER_WINDOW}/min, ${LIMITS.MAX_CALLS_PER_PROCESS} calls/process`,
         )
       }
+
+      const livekitReady =
+        config.livekit.url && config.livekit.apiKey && config.livekit.apiSecret
+      if (!livekitReady) {
+        log.warn(
+          '[auricle] LiveKit is not configured — video visits will show a setup message. Add LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET to .env.',
+        )
+      } else {
+        log.info(`[auricle] livekit ready: POST /api/livekit-token (${config.livekit.url})`)
+        log.info(`[auricle] livekit secret from: ${config.livekit.keySource}`)
+      }
+
       attach(server, config)
     },
     configurePreviewServer(server) {
