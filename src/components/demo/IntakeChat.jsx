@@ -3,17 +3,17 @@ import { Badge, Button } from '../ui/primitives.jsx'
 import { CLIENT_LIMITS } from '../../domain/limits.js'
 
 /**
- * Live triage chat.
+ * AI-assisted intake chat, before the scheduled call.
  *
  * Structured after the chatscope/chat-ui-kit-react component split
  * (MessageList / Message / MessageInput / TypingIndicator) but built here rather
  * than pulled in, because that kit's default styling is hard to reconcile with
  * this design system and the component tree is what's worth borrowing.
  *
- * Unlike the earlier scripted version, every assistant turn here is a real
- * model response. That changes what the UI owes the user: an in-flight
- * indicator, a visible turn budget, a hard stop when the agent flags an
- * emergency, and honest labelling that this is AI rather than a clinician.
+ * Every assistant turn here is a real model response. That changes what the UI
+ * owes the user: an in-flight indicator, a visible turn budget, a hard stop when
+ * the agent flags an emergency, and honest labelling that this is AI rather than
+ * a clinician.
  */
 
 function Avatar({ who }) {
@@ -116,18 +116,18 @@ export function IntakeChat({
   const placeholder = emergency
     ? 'Intake stopped — please seek immediate in-person care.'
     : blocked
-      ? 'Triage chat disabled for this session.'
+      ? 'Intake chat disabled for this session.'
       : atTurnLimit
-        ? 'Message limit reached — submit the case below.'
+        ? 'Message limit reached — book your call below.'
         : 'Type your answer…'
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-dune bg-sandstone">
       <div className="flex items-start justify-between gap-3 border-b border-dune bg-sandstone-raised px-4 py-3">
         <div>
-          <p className="text-[15px] font-medium text-ink">Intake triage</p>
+          <p className="text-[15px] font-medium text-ink">Intake assistant</p>
           <p className="mt-0.5 text-xs text-umber">
-            AI assistant · a cardiologist reviews everything afterward
+            AI · prepares the physician for your call. Not a clinician.
           </p>
         </div>
         <Badge tone={emergency ? 'alert' : 'draft'} className="shrink-0">
@@ -177,8 +177,8 @@ export function IntakeChat({
             This intake has been stopped on purpose.
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-            The assistant flagged something that needs same-day in-person assessment. Asynchronous
-            second-opinion care is the wrong venue for it.
+            The assistant flagged something that needs same-day in-person assessment. A preventive
+            call booked for later is the wrong venue for it.
           </p>
         </div>
       )}

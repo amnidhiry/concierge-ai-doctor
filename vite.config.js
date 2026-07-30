@@ -60,12 +60,19 @@ export default defineConfig(({ mode }) => {
        * Entries are hostnames, not URLs — no scheme and no path, since Vite
        * compares against the Host header, which carries neither.
        *
-       * Quick-tunnel hostnames are regenerated every time `cloudflared` restarts,
-       * so this one will stop matching after the tunnel is restarted. Swap in
-       * '.trycloudflare.com' (leading dot = that domain and all subdomains) to
-       * cover every future quick tunnel without editing this file again.
+       * A leading dot means "that domain and all subdomains", which is what makes
+       * this survive a tunnel restart: quick-tunnel hostnames are regenerated
+       * every time `cloudflared` starts, so a single pinned hostname stops
+       * matching the moment the tunnel comes back and the dev server starts
+       * refusing requests for no visible reason.
+       *
+       * Worth understanding before widening this further: a tunnel is how the
+       * demo gets a secure context on a second physical device, which
+       * `getUserMedia` requires for the voice call. It also exposes this dev
+       * server — which holds the API keys — to anyone with the URL, so bring the
+       * tunnel up for a demo and take it down afterwards.
        */
-      allowedHosts: ['laundry-graduate-proceeds-diverse.trycloudflare.com'],
+      allowedHosts: ['.trycloudflare.com'],
     },
   }
 })

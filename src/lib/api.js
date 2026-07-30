@@ -1,5 +1,5 @@
 /**
- * Client wrappers for the two API endpoints.
+ * Client wrappers for the API endpoints.
  *
  * Every failure path resolves to the same
  * `{ ok: false, error: { kind, message, retryAfterSeconds? } }` shape so the UI
@@ -57,17 +57,28 @@ async function post(path, payload, { signal } = {}) {
   return { ok: true, ...body }
 }
 
-/** Step 1 — one turn of the triage conversation. */
-export function requestTriage({ message, turns }, options) {
-  return post('/api/triage', { message, turns }, options)
+/** One turn of the AI-assisted intake conversation. */
+export function requestIntakeTurn({ message, turns }, options) {
+  return post('/api/intake', { message, turns }, options)
 }
 
-/** Clears this client's server-side triage counters. Wired to Reset. */
-export function resetTriage() {
-  return post('/api/triage/reset', {})
+/** Clears this client's server-side intake counters. Wired to Reset. */
+export function resetIntake() {
+  return post('/api/intake/reset', {})
 }
 
-/** Step 2 — the second-opinion synthesis. */
-export function requestSynthesis({ patientMessage, chartText }, options) {
-  return post('/api/synthesize', { patientMessage, chartText }, options)
+/** Assembles the care packet the physician reads before the call. */
+export function requestCarePacket({ patientMessage, chartText }, options) {
+  return post('/api/care-packet', { patientMessage, chartText }, options)
+}
+
+/**
+ * Drafts the post-call documentation.
+ *
+ * `transcript` is always operator-pasted synthetic text — there is no
+ * speech-to-text in this build, and the server rejects an empty transcript
+ * rather than drafting from the care packet alone.
+ */
+export function requestVisitDocumentation({ transcript, packet }, options) {
+  return post('/api/visit-documentation', { transcript, packet }, options)
 }

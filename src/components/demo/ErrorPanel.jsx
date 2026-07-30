@@ -1,12 +1,16 @@
 import { Button } from '../ui/primitives.jsx'
 
 /**
- * Failure state for the synthesis call.
+ * Failure state for a model call.
  *
- * A failed call must never render as an empty draft — the reviewer has to be
+ * A failed call must never render as an empty document — the reviewer has to be
  * able to tell "the model said nothing useful" from "the call did not happen".
  * Each error kind gets a specific remedy, because "something went wrong" leaves
  * the operator with nowhere to go.
+ *
+ * Shared by the care-packet and documentation stages; `stage` only changes the
+ * label, since every remedy below is about the call rather than about which stage
+ * made it.
  */
 
 const GUIDANCE = {
@@ -37,13 +41,18 @@ const GUIDANCE = {
   },
   refusal: {
     title: 'The model declined this request',
-    hint: 'Safety classifiers stopped the response. Rephrase the intake, or use different synthetic material.',
+    hint: 'Safety classifiers stopped the response. Rephrase the input, or use different synthetic material.',
     retryable: false,
   },
   malformed_response: {
     title: 'Unusable response',
-    hint: 'The call returned no valid structured draft. If it hit the token limit, raise ANTHROPIC_MAX_TOKENS in .env; otherwise retry.',
+    hint: 'The call returned no valid structured output. If it hit the token limit, raise ANTHROPIC_MAX_TOKENS in .env; otherwise retry.',
     retryable: true,
+  },
+  no_transcript: {
+    title: 'No transcript to work from',
+    hint: 'This build has no speech-to-text, so documentation is never drafted without a transcript. Paste or write the synthetic visit transcript first, then retry.',
+    retryable: false,
   },
   bad_request: {
     title: 'Request rejected',
@@ -51,21 +60,24 @@ const GUIDANCE = {
     retryable: false,
   },
   unknown: {
-    title: 'Synthesis failed',
+    title: 'The call failed',
     hint: 'An unexpected error. The dev-server console has the underlying message.',
     retryable: true,
   },
 }
 
-export function ErrorPanel({ error, onRetry, onStartOver }) {
+export function ErrorPanel({ error, onRetry, onStartOver, stage = 'Model call', startOverLabel }) {
   const guide = GUIDANCE[error?.kind] ?? GUIDANCE.unknown
 
   return (
-    <div role="alert" className="overflow-hidden rounded-lg border border-crimson/30 bg-sandstone-raised shadow-card">
+    <div
+      role="alert"
+      className="overflow-hidden rounded-lg border border-crimson/30 bg-sandstone-raised shadow-card"
+    >
       <div className="h-0.5 bg-crimson" />
       <div className="p-6 sm:p-8">
-        <p className="field-label text-crimson">Step 2 failed</p>
-        <h2 className="mt-3 font-display text-2xl leading-tight text-ink">{guide.title}</h2>
+        <p className="field-label text-crimson">{stage} failed</p>
+        <h2 className="mt-3 text-title text-ink">{guide.title}</h2>
 
         {error?.message && (
           <p className="mt-4 rounded-md bg-crimson-wash px-4 py-3 font-mono text-[13px] leading-relaxed text-crimson">
@@ -82,14 +94,16 @@ export function ErrorPanel({ error, onRetry, onStartOver }) {
         ) : null}
 
         <div className="mt-7 flex flex-wrap gap-3">
-          {guide.retryable && (
+          {guide.retryable && onRetry && (
             <Button variant="primary" onClick={onRetry}>
-              Retry synthesis
+              Retry
             </Button>
           )}
-          <Button variant="outline" onClick={onStartOver}>
-            Start over with a new case
-          </Button>
+          {onStartOver && (
+            <Button variant="outline" onClick={onStartOver}>
+              {startOverLabel ?? 'Start over with a new booking'}
+            </Button>
+          )}
         </div>
       </div>
     </div>

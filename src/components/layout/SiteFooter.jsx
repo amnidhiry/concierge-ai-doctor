@@ -14,9 +14,9 @@ import { MetaList, MetaRow } from '../case/CaseSheet.jsx'
  */
 
 const NAV = [
-  { to: '/services', label: 'Services and pricing' },
+  { to: '/the-visit', label: 'What the visit covers' },
   { to: '/for-physicians', label: 'For physicians' },
-  { to: '/demo', label: 'Start a specialist review' },
+  { to: '/demo', label: 'Book a call' },
 ]
 
 const DISCLOSURES = [
@@ -30,11 +30,19 @@ const DISCLOSURES = [
   ],
   [
     'Not medical advice',
-    'Nothing produced here is medical advice or a diagnosis. AI output is labelled as a draft until a physician has reviewed it.',
+    'Nothing produced here is medical advice or a diagnosis. AI output is labelled as a draft until a physician has approved it.',
+  ],
+  [
+    'No transcription',
+    'Calls are not recorded and not transcribed. The demo’s post-call documentation is drafted from a synthetic transcript typed in by hand.',
+  ],
+  [
+    'No risk scores',
+    'Nothing here calculates a PREVENT, ASCVD, or other cardiovascular risk score. A score present in submitted material is reported as supplied; otherwise none is produced.',
   ],
   [
     'Physician identity',
-    'The reviewing physician shown throughout is a placeholder. No real clinician’s name or credentials appear on this site.',
+    'The physician shown throughout is a placeholder. No real clinician’s name or credentials appear on this site.',
   ],
   [
     'Compliance',
@@ -52,8 +60,8 @@ export function SiteFooter() {
               Auricle<span className="italic">Health</span>
             </p>
             <p className="mt-3 max-w-note text-meta leading-relaxed text-umber">
-              Asynchronous preventative cardiology. A named specialist reads your records and writes
-              the response.
+              One bounded preventive-cardiology visit. A named specialist reads your records, then
+              spends 20–30 minutes on the phone with you.
             </p>
 
             <nav aria-label="Footer" className="mt-7">

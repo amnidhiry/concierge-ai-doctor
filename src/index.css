@@ -118,54 +118,16 @@
 }
 
 /**
- * LiveKit component theming.
+ * No LiveKit component theming here any more.
  *
- * @livekit/components-styles ships a dark theme with its own accents and
- * pill-shaped controls. Rather than fight it with selector overrides (which break
- * on package updates), remap the custom properties it is built on. Scoped to
- * `.lk-shell` so nothing leaks into the rest of the app.
+ * The previous version remapped ~20 `--lk-*` custom properties and overrode
+ * `.lk-participant-tile` / `.lk-grid-layout`, because the call UI was built on
+ * LiveKit's prebuilt video components and `@livekit/components-styles` ships a
+ * dark theme with its own accents and pill controls.
+ *
+ * The visit is now audio-only and the in-call UI is built from this design
+ * system's own primitives — the one LiveKit component still rendered is
+ * `RoomAudioRenderer`, which emits unstyled `<audio>` elements. So the
+ * stylesheet is no longer imported, the dependency is gone, and these overrides
+ * would have been dead CSS shadowing selectors that never appear.
  */
-.lk-shell {
-  --lk-bg: #241b15;
-  --lk-bg2: #3a2e24;
-  --lk-bg3: #4e4034;
-  --lk-fg: #f4efe6;
-  --lk-fg2: #dcd1c2;
-  --lk-fg3: #c3b4a1;
-  --lk-border-color: rgba(220, 209, 194, 0.16);
-  --lk-accent-bg: #a84b23;
-  --lk-accent2: #a84b23;
-  --lk-accent3: #8c3d1b;
-  --lk-accent-fg: #ffffff;
-  --lk-danger: #a32a25;
-  --lk-danger2: #a32a25;
-  --lk-danger-fg: #ffffff;
-  --lk-success: #4e6b4a;
-  --lk-control-bg: rgba(220, 209, 194, 0.1);
-  --lk-control-hover-bg: rgba(220, 209, 194, 0.18);
-  --lk-control-fg: #f4efe6;
-  --lk-border-radius: 2px;
-  --lk-font-family: '"IBM Plex Sans"', system-ui, sans-serif;
-}
-
-.lk-shell .lk-participant-tile {
-  border-radius: 2px;
-  overflow: hidden;
-  background: #3a2e24;
-}
-
-.lk-shell .lk-participant-name {
-  font-family: '"IBM Plex Mono"', ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
-}
-
-.lk-shell .lk-stage {
-  min-height: 0;
-}
-
-.lk-shell .lk-grid-layout {
-  height: 100%;
-  gap: 0.5rem;
-}

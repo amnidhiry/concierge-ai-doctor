@@ -15,7 +15,7 @@ export function NotFound() {
             Back to home
           </Button>
           <Button as="link" to="/demo" variant="primary">
-            Start a specialist review
+            Book a call
           </Button>
         </div>
       </div>

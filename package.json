@@ -3,16 +3,19 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Demo-day prototype for AuricleHealth — marketing site plus an end-to-end second-opinion product demo backed by a real Claude API synthesis call.",
+  "description": "Prototype for AuricleHealth — a patient-facing site plus an end-to-end demo of one bounded preventive-cardiology expert-opinion visit: booking, AI-assisted intake, a source-linked care packet, a scheduled voice call, and AI-drafted documentation the physician approves. Backed by real Anthropic API and LiveKit calls.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "check": "node scripts/check-repo.mjs",
+    "verify": "npm run check && npm test && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@livekit/components-react": "^2.9.23",
-    "@livekit/components-styles": "^1.2.0",
+    "@livekit/protocol": "^1.48.0",
     "livekit-client": "^2.21.0",
     "livekit-server-sdk": "^2.17.0",
     "react": "^18.3.1",

@@ -1,36 +1,34 @@
 import { useEffect, useRef, useState } from 'react'
-import { useVideoVisit } from '../../hooks/useVideoVisit.js'
-import { VideoVisitPanel } from '../video/LazyVideoVisitPanel.jsx'
-import { patientVisitUrl } from '../../lib/videoVisit.js'
+import { useVoiceVisit } from '../../hooks/useVoiceVisit.js'
+import { VoiceVisitPanel } from '../voice/LazyVoiceVisitPanel.jsx'
+import { patientVisitUrl } from '../../lib/voiceVisit.js'
 import { Button } from '../ui/primitives.jsx'
 
 /**
- * Physician-side entry point to a real LiveKit visit.
+ * Physician-side entry point to the scheduled voice call.
  *
- * Phase 1 shipped this as a placeholder modal, structurally isolated so real
- * video could drop in without touching the dashboard. That held: this file's body
- * was replaced, its props are unchanged apart from the `caseId` the room is
- * derived from, and no video state leaked into the case model.
- *
- * Also surfaces the patient join link. The patient side runs in a second tab,
- * and a second tab has none of this tab's in-memory demo state — so the link
- * points at a standalone route keyed by case ID rather than at anything that
- * depends on the physician's session.
+ * Also surfaces the patient join link. The patient side runs in a second tab, and
+ * a second tab has none of this tab's in-memory demo state — so the link points
+ * at a standalone route keyed by case ID rather than at anything that depends on
+ * the physician's session.
  */
-export function JoinVideoVisitButton({
+export function StartVoiceVisitButton({
   caseId,
   patientName,
   displayName,
-  variant = 'outline',
+  durationMinutes,
+  onEndVisit,
+  variant = 'primary',
   className = '',
+  label = 'Start the call',
 }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const closeRef = useRef(null)
-  const visit = useVideoVisit({ caseId, role: 'physician', displayName })
+  const visit = useVoiceVisit({ caseId, role: 'physician', displayName })
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return undefined
     closeRef.current?.focus()
     const onKey = (e) => {
       // Escape shouldn't yank the physician out of a live call by accident.
@@ -47,9 +45,9 @@ export function JoinVideoVisitButton({
       setCopied(true)
       setTimeout(() => setCopied(false), 2200)
     } catch {
-      // Clipboard API needs a secure context and can be blocked outright.
+      // The Clipboard API needs a secure context and can be blocked outright.
       // Falling back to a prompt beats a button that silently does nothing.
-      window.prompt('Copy the patient visit link:', url)
+      window.prompt('Copy the patient call link:', url)
     }
   }
 
@@ -58,19 +56,25 @@ export function JoinVideoVisitButton({
     visit.reset()
   }
 
+  /** Ending the visit closes the dialog: the next thing to do is the write-up. */
+  function handleEndVisit() {
+    onEndVisit?.()
+    setOpen(false)
+  }
+
   return (
     <>
       <Button variant={variant} onClick={() => setOpen(true)} className={className}>
         <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" aria-hidden="true">
-          <rect x="1" y="4" width="9" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
           <path
-            d="M11 7.2 15 5v6l-4-2.2z"
+            d="M3.2 2h2.3l1.1 2.8-1.5 1.1a7.4 7.4 0 0 0 3.9 3.9l1.1-1.5L13 9.4v2.3a1.3 1.3 0 0 1-1.4 1.3A10.6 10.6 0 0 1 2 3.4 1.3 1.3 0 0 1 3.2 2Z"
             stroke="currentColor"
             strokeWidth="1.4"
+            strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
-        Join video visit
+        {label}
       </Button>
 
       {open && (
@@ -83,15 +87,17 @@ export function JoinVideoVisitButton({
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="video-visit-title"
-            className="w-full max-w-3xl overflow-hidden rounded-lg border border-dune bg-sandstone-raised shadow-lift"
+            aria-labelledby="voice-visit-title"
+            className="w-full max-w-2xl overflow-hidden border border-dune bg-sandstone-raised shadow-lift"
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dune px-5 py-3.5">
-              <div>
-                <p id="video-visit-title" className="text-[15px] font-medium text-ink">
-                  Video visit · {patientName || caseId}
+              <div className="min-w-0">
+                <p id="voice-visit-title" className="text-[15px] font-medium text-ink">
+                  Voice visit · {patientName || caseId}
                 </p>
-                <p className="mt-0.5 font-mono text-[11px] text-umber">room visit-{caseId}</p>
+                <p className="mt-0.5 font-mono text-[11px] text-umber">
+                  room visit-{caseId} · audio only
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" onClick={copyLink} className="px-3 py-1.5 text-sm">
@@ -104,7 +110,7 @@ export function JoinVideoVisitButton({
                   disabled={visit.isActive}
                   title={visit.isActive ? 'Leave the call before closing' : 'Close'}
                   className="rounded-md p-2 text-umber transition-colors hover:bg-dune/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Close video visit"
+                  aria-label="Close voice visit"
                 >
                   <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden="true">
                     <path
@@ -118,13 +124,19 @@ export function JoinVideoVisitButton({
               </div>
             </div>
 
-            <VideoVisitPanel visit={visit} role="physician" onClose={close} />
+            <VoiceVisitPanel
+              visit={visit}
+              role="physician"
+              onClose={close}
+              onEndVisit={onEndVisit ? handleEndVisit : undefined}
+              durationMinutes={durationMinutes}
+            />
 
             {!visit.isActive && (
               <div className="border-t border-dune bg-dune/25 px-5 py-3">
                 <p className="text-[13px] leading-relaxed text-umber">
                   For the demo: join here, then open the patient link in a second tab to connect the
-                  other side.
+                  other side. Use headphones — two tabs on one machine will echo.
                 </p>
               </div>
             )}

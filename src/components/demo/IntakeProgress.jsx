@@ -1,25 +1,25 @@
 import { Badge } from '../ui/primitives.jsx'
 
 /**
- * Live view of what the triage agent has captured.
+ * Live view of what the intake agent has captured.
  *
  * This exists because a chat transcript alone doesn't show whether the intake is
  * actually going anywhere. Rendering the agent's own `information_gathered` and
  * `still_needed` makes the structured extraction visible as it happens — and it
- * makes a bad turn obvious, since a misread answer shows up here as a wrong
- * fact rather than being buried three messages up.
+ * makes a bad turn obvious, since a misread answer shows up here as a wrong fact
+ * rather than being buried three messages up.
  */
-export function TriageProgress({ agentState, readyForPhysician }) {
+export function IntakeProgress({ agentState, readyForVisit }) {
   const gathered = agentState?.information_gathered ?? []
   const needed = agentState?.still_needed ?? []
 
   if (!agentState) {
     return (
       <div className="rounded-lg border border-dashed border-dune-deep bg-dune/20 px-4 py-5">
-        <p className="field-label">Captured so far</p>
+        <p className="field-label">Captured for your call</p>
         <p className="mt-2 text-[13px] leading-relaxed text-umber">
           Nothing yet. Answer the assistant and the structured intake will build here as it reads
-          your replies.
+          your replies. This is what the physician sees before the call.
         </p>
       </div>
     )
@@ -28,9 +28,9 @@ export function TriageProgress({ agentState, readyForPhysician }) {
   return (
     <div className="rounded-lg border border-dune bg-sandstone-raised">
       <div className="flex items-center justify-between gap-3 border-b border-dune px-4 py-3">
-        <p className="field-label">Captured so far</p>
-        {readyForPhysician ? (
-          <Badge tone="verified">Ready to submit</Badge>
+        <p className="field-label">Captured for your call</p>
+        {readyForVisit ? (
+          <Badge tone="verified">Ready to book</Badge>
         ) : (
           <Badge tone="neutral">{gathered.length} items</Badge>
         )}

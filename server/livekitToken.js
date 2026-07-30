@@ -1,5 +1,5 @@
 /**
- * LiveKit access-token issuance for the video visit.
+ * LiveKit access-token issuance for the scheduled voice visit.
  *
  * LiveKit rooms are joined with a short-lived JWT signed by the project's API
  * secret. That signing has to happen server-side — the secret is the credential
@@ -13,13 +13,23 @@
  *
  * Scope of the grant is deliberately narrow. A token is issued for exactly one
  * room and one identity, can publish and subscribe but not administer, and
- * expires in 30 minutes. It is not a general-purpose credential.
+ * expires in 45 minutes. It is not a general-purpose credential.
+ *
+ * ── Why the TTL is 45 minutes ──────────────────────────────────────────────
+ * The visit is scheduled for 20–30 minutes. 45 leaves room for a late start and
+ * a couple of minutes of overrun without the token expiring mid-sentence, and is
+ * still short enough that a leaked token decays on its own.
  */
 
 import { AccessToken } from 'livekit-server-sdk'
+// `canPublishSources` is serialized through the SDK's own enum-to-string mapper,
+// which throws a TypeError on anything that is not a `TrackSource` member — so the
+// obvious-looking `['microphone']` fails at `toJwt()` time, not at `addGrant()`.
+// Importing the enum is the only way to build this grant.
+import { TrackSource } from '@livekit/protocol'
 
-/** Token lifetime. Long enough for a visit, short enough that a leak decays. */
-const TOKEN_TTL_SECONDS = 30 * 60
+/** Token lifetime. Covers a 30-minute visit plus a late start. */
+const TOKEN_TTL_SECONDS = 45 * 60
 
 /** Roles allowed to join. Anything else is rejected rather than passed through. */
 const ROLES = {
@@ -95,8 +105,13 @@ export async function mintToken({ apiKey, apiSecret, roomName, identity, name })
     roomJoin: true,
     canPublish: true,
     canSubscribe: true,
+    // The visit is audio-only, so the grant is narrowed to the audio source
+    // rather than left at "publish anything". A client that tried to publish
+    // camera or screen-share video would be refused by the server, which means
+    // "no video" is enforced by the token rather than only by the UI choosing
+    // not to ask for a camera.
+    canPublishSources: [TrackSource.MICROPHONE],
     // No data channel, no room admin, no ability to update other participants.
-    // The demo needs audio and video and nothing else.
     canPublishData: false,
     roomAdmin: false,
     roomCreate: false,
@@ -105,4 +120,4 @@ export async function mintToken({ apiKey, apiSecret, roomName, identity, name })
   return at.toJwt()
 }
 
-export { TOKEN_TTL_SECONDS, ROLES }
+export { TOKEN_TTL_SECONDS, ROLES, CASE_ID_PATTERN }

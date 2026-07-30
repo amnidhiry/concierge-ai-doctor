@@ -2,44 +2,57 @@
  * Vite plugin exposing the API routes the demo needs, during `npm run dev` and
  * `npm run preview`:
  *
- *   POST /api/triage         — Step 1 conversational intake agent
- *   POST /api/synthesize     — Step 2 second-opinion synthesis
- *   POST /api/triage/reset   — clears one client's triage counters
- *   POST /api/livekit-token  — issues a video-visit access token
+ *   POST /api/intake               — AI-assisted intake, one conversational turn
+ *   POST /api/intake/reset         — clears one client's intake counters
+ *   POST /api/care-packet          — the packet the physician reads before the call
+ *   POST /api/visit-documentation  — post-call note, patient summary, billing suggestion
+ *   POST /api/livekit-token        — issues a voice-visit access token
  *
- * Why a server-side proxy at all: the Anthropic API cannot be called safely
- * from browser JS. Doing so requires the
+ * Why a server-side proxy at all: the Anthropic API cannot be called safely from
+ * browser JS. Doing so requires the
  * `anthropic-dangerous-direct-browser-access` header and ships the API key in
  * the client bundle, where anyone who opens devtools can read it. This
  * middleware runs in Node, so the key stays in `.env` and never crosses to the
  * browser.
  *
- * Both routes force structured output with a single tool plus
+ * All three model routes force structured output with a single tool plus
  * `tool_choice: {type: 'tool', name: ...}`. The model must emit a `tool_use`
  * block, and `block.input` arrives already parsed — so there is no "extract JSON
  * from prose" step that can fail on a stray code fence. This also works on every
  * current model; `output_config.format` does not (it is unavailable on
  * Sonnet 4.6).
+ *
+ * ── This is dev-server middleware, and that is a real limitation ───────────
+ * `npm run build` produces a static bundle with NO /api routes. The built site
+ * cannot reach the model at all. Porting these handlers to serverless functions
+ * is the first thing that has to happen before this leaves localhost — see the
+ * README. The handler bodies transfer nearly as-is; only the request/response
+ * adapter changes.
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import {
-  SYNTHESIS_SYSTEM_PROMPT,
-  SYNTHESIS_TOOL,
-  buildSynthesisUserMessage,
-} from '../src/prompts/synthesisPrompt.js'
+  CARE_PACKET_SYSTEM_PROMPT,
+  CARE_PACKET_TOOL,
+  buildCarePacketUserMessage,
+} from '../src/prompts/carePacketPrompt.js'
 import {
-  TRIAGE_SYSTEM_PROMPT,
-  TRIAGE_TOOL,
-  buildTriageMessages,
-} from '../src/prompts/triagePrompt.js'
+  DOCUMENTATION_SYSTEM_PROMPT,
+  DOCUMENTATION_TOOL,
+  buildDocumentationUserMessage,
+} from '../src/prompts/documentationPrompt.js'
+import {
+  INTAKE_SYSTEM_PROMPT,
+  INTAKE_TOOL,
+  buildIntakeMessages,
+} from '../src/prompts/intakePrompt.js'
 import {
   LIMITS,
   budgetRemaining,
-  checkTriageAllowed,
+  checkIntakeAllowed,
   clientKey,
+  recordIntakeCall,
   recordOffTopic,
-  recordTriageCall,
   resetClient,
 } from './guards.js'
 import { TOKEN_TTL_SECONDS, mintToken, validateTokenRequest } from './livekitToken.js'
@@ -50,6 +63,15 @@ const DEFAULT_MAX_TOKENS = 8000
 // Guards against a paste large enough to blow the context window. The Vite dev
 // server has no body-size limit of its own, so we impose one.
 const MAX_CHARS = 200_000
+
+/**
+ * Transcript cap for the documentation call.
+ *
+ * A 30-minute call transcribes to roughly 5k words, so 60k characters is
+ * generous for a real one. The cap exists because this field is an open textarea
+ * and the endpoint is unauthenticated on localhost.
+ */
+const MAX_TRANSCRIPT_CHARS = 60_000
 
 function sendJson(res, status, payload) {
   res.statusCode = status
@@ -207,19 +229,33 @@ function extractToolInput(response, toolName) {
   return { input: toolUse.input }
 }
 
+/** Shared response metadata, so every route reports the same transparency fields. */
+function callMeta(response, startedAt) {
+  return {
+    model: response.model,
+    stopReason: response.stop_reason,
+    elapsedMs: Date.now() - startedAt,
+    usage: {
+      inputTokens: response.usage?.input_tokens ?? null,
+      outputTokens: response.usage?.output_tokens ?? null,
+    },
+    generatedAt: new Date().toISOString(),
+  }
+}
+
 // ---------------------------------------------------------------------------
-// POST /api/triage — Step 1 conversational intake
+// POST /api/intake — AI-assisted intake, one conversational turn
 // ---------------------------------------------------------------------------
 
-async function handleTriage(req, res, config) {
+async function handleIntake(req, res, config) {
   if (!config.anthropic.apiKey) return missingKeyResponse(res)
 
   const key = clientKey(req)
 
   let body
   try {
-    // Tighter body cap than synthesis: a triage turn is a chat message, and the
-    // per-message limit is 2k characters.
+    // Tighter body cap than the packet call: an intake turn is a chat message,
+    // and the per-message limit is 2k characters.
     body = await readBody(req, LIMITS.MAX_MESSAGE_CHARS * 4 + LIMITS.MAX_TRANSCRIPT_CHARS * 2)
   } catch (err) {
     const described = describeError(err, config.anthropic.model)
@@ -236,35 +272,32 @@ async function handleTriage(req, res, config) {
     0,
   )
 
-  const blocked = checkTriageAllowed({ key, turnCount, message, transcriptChars })
+  const blocked = checkIntakeAllowed({ key, turnCount, message, transcriptChars })
   if (blocked) {
     return sendJson(res, blocked.status, { error: blocked })
   }
 
   const client = new Anthropic({ apiKey: config.anthropic.apiKey })
-  recordTriageCall(key)
+  recordIntakeCall(key)
 
   try {
     const response = await client.messages.create({
       model: config.anthropic.model,
-      // Deliberately much smaller than the synthesis cap: replies are meant to
-      // be under 90 words, and a low ceiling is a cost control that also keeps
-      // the agent from drifting into essays.
+      // Deliberately much smaller than the packet cap: replies are meant to be
+      // under 90 words, and a low ceiling is a cost control that also keeps the
+      // agent from drifting into essays.
       max_tokens: LIMITS.MAX_OUTPUT_TOKENS,
       thinking: { type: 'disabled' },
-      // Triage is conversational and shallow. `low` keeps turns fast and cheap;
-      // the clinical reasoning happens in Step 2 at higher effort.
+      // Intake is conversational and shallow. `low` keeps turns fast and cheap;
+      // the clinical reasoning happens in the care-packet call at higher effort.
       output_config: { effort: 'low' },
-      system: TRIAGE_SYSTEM_PROMPT,
-      tools: [TRIAGE_TOOL],
-      tool_choice: { type: 'tool', name: TRIAGE_TOOL.name },
-      messages: [
-        ...buildTriageMessages(turns),
-        { role: 'user', content: message },
-      ],
+      system: INTAKE_SYSTEM_PROMPT,
+      tools: [INTAKE_TOOL],
+      tool_choice: { type: 'tool', name: INTAKE_TOOL.name },
+      messages: [...buildIntakeMessages(turns), { role: 'user', content: message }],
     })
 
-    const { input, error } = extractToolInput(response, TRIAGE_TOOL.name)
+    const { input, error } = extractToolInput(response, INTAKE_TOOL.name)
     if (error) return sendJson(res, error.status, { error })
 
     const scope = ['on_topic', 'off_topic', 'emergency'].includes(input.scope)
@@ -275,8 +308,7 @@ async function handleTriage(req, res, config) {
     // can't sit in a loop burning calls on polite refusals.
     let strikes = null
     if (scope === 'off_topic') {
-      const result = recordOffTopic(key)
-      strikes = result
+      strikes = recordOffTopic(key)
     }
 
     return sendJson(res, 200, {
@@ -288,7 +320,7 @@ async function handleTriage(req, res, config) {
           ? input.information_gathered
           : [],
         still_needed: Array.isArray(input.still_needed) ? input.still_needed : [],
-        ready_for_physician: Boolean(input.ready_for_physician),
+        ready_for_visit: Boolean(input.ready_for_visit),
       },
       meta: {
         model: response.model,
@@ -304,17 +336,17 @@ async function handleTriage(req, res, config) {
       },
     })
   } catch (err) {
-    console.error('[triage] failed:', err?.message || err)
+    console.error('[intake] failed:', err?.message || err)
     const described = describeError(err, config.anthropic.model)
     return sendJson(res, described.status, { error: described })
   }
 }
 
 // ---------------------------------------------------------------------------
-// POST /api/synthesize — Step 2 second-opinion synthesis
+// POST /api/care-packet — what the physician reads before the call
 // ---------------------------------------------------------------------------
 
-async function handleSynthesize(req, res, config) {
+async function handleCarePacket(req, res, config) {
   if (!config.anthropic.apiKey) return missingKeyResponse(res)
 
   let body
@@ -332,7 +364,8 @@ async function handleSynthesize(req, res, config) {
     return sendJson(res, 400, {
       error: {
         kind: 'bad_request',
-        message: 'Nothing to synthesize. Provide a patient message, chart text, or both.',
+        message:
+          'Nothing to assemble. Provide the intake conversation, chart text, or both.',
       },
     })
   }
@@ -358,48 +391,124 @@ async function handleSynthesize(req, res, config) {
       // swapped via ANTHROPIC_MODEL for one where adaptive is the default.
       thinking: { type: 'disabled' },
       output_config: { effort: 'medium' },
-      system: SYNTHESIS_SYSTEM_PROMPT,
-      tools: [SYNTHESIS_TOOL],
-      tool_choice: { type: 'tool', name: SYNTHESIS_TOOL.name },
+      system: CARE_PACKET_SYSTEM_PROMPT,
+      tools: [CARE_PACKET_TOOL],
+      tool_choice: { type: 'tool', name: CARE_PACKET_TOOL.name },
       messages: [
-        { role: 'user', content: buildSynthesisUserMessage({ patientMessage, chartText }) },
+        { role: 'user', content: buildCarePacketUserMessage({ patientMessage, chartText }) },
       ],
     })
 
-    const { input: draft, error } = extractToolInput(response, SYNTHESIS_TOOL.name)
+    const { input: packet, error } = extractToolInput(response, CARE_PACKET_TOOL.name)
     if (error) return sendJson(res, error.status, { error })
 
-    if (!draft || typeof draft !== 'object' || typeof draft.one_line_summary !== 'string') {
+    if (!packet || typeof packet !== 'object' || typeof packet.one_line_summary !== 'string') {
       return sendJson(res, 502, {
         error: {
           kind: 'malformed_response',
-          message: 'The structured draft was missing required fields. Retry the synthesis.',
+          message: 'The structured care packet was missing required fields. Retry the call.',
         },
       })
     }
 
-    return sendJson(res, 200, {
-      draft,
-      meta: {
-        model: response.model,
-        stopReason: response.stop_reason,
-        elapsedMs: Date.now() - startedAt,
-        usage: {
-          inputTokens: response.usage?.input_tokens ?? null,
-          outputTokens: response.usage?.output_tokens ?? null,
-        },
-        generatedAt: new Date().toISOString(),
-      },
-    })
+    return sendJson(res, 200, { packet, meta: callMeta(response, startedAt) })
   } catch (err) {
-    console.error('[synthesize] failed:', err?.message || err)
+    console.error('[care-packet] failed:', err?.message || err)
     const described = describeError(err, config.anthropic.model)
     return sendJson(res, described.status, { error: described })
   }
 }
 
 // ---------------------------------------------------------------------------
-// POST /api/livekit-token — video visit access token
+// POST /api/visit-documentation — post-call note, patient summary, billing code
+// ---------------------------------------------------------------------------
+
+/**
+ * Turns the pasted transcript into draft documentation.
+ *
+ * The transcript arrives from the client because there is no speech-to-text in
+ * this build — the UI requires an operator to paste synthetic text after the
+ * call. This endpoint therefore refuses an empty transcript rather than
+ * proceeding on the care packet alone: a "transcript-derived" note generated
+ * with no transcript would be pure fabrication, and it is exactly the failure
+ * this stage exists to demonstrate the absence of.
+ */
+async function handleVisitDocumentation(req, res, config) {
+  if (!config.anthropic.apiKey) return missingKeyResponse(res)
+
+  let body
+  try {
+    body = await readBody(req, MAX_TRANSCRIPT_CHARS * 4)
+  } catch (err) {
+    const described = describeError(err, config.anthropic.model)
+    return sendJson(res, described.status, { error: described })
+  }
+
+  const transcript = typeof body.transcript === 'string' ? body.transcript : ''
+  const packet = body.packet && typeof body.packet === 'object' ? body.packet : null
+
+  if (!transcript.trim()) {
+    return sendJson(res, 400, {
+      error: {
+        kind: 'no_transcript',
+        message:
+          'No transcript was provided. This build has no speech-to-text, and documentation is never generated without one — paste the synthetic visit transcript first.',
+      },
+    })
+  }
+
+  if (transcript.length > MAX_TRANSCRIPT_CHARS) {
+    return sendJson(res, 413, {
+      error: {
+        kind: 'bad_request',
+        message: `The transcript is ${transcript.length} characters; the limit is ${MAX_TRANSCRIPT_CHARS}. Trim it and retry.`,
+      },
+    })
+  }
+
+  const client = new Anthropic({ apiKey: config.anthropic.apiKey })
+  const startedAt = Date.now()
+
+  try {
+    const response = await client.messages.create({
+      model: config.anthropic.model,
+      max_tokens: config.anthropic.maxTokens,
+      thinking: { type: 'disabled' },
+      output_config: { effort: 'medium' },
+      system: DOCUMENTATION_SYSTEM_PROMPT,
+      tools: [DOCUMENTATION_TOOL],
+      tool_choice: { type: 'tool', name: DOCUMENTATION_TOOL.name },
+      messages: [
+        { role: 'user', content: buildDocumentationUserMessage({ transcript, packet }) },
+      ],
+    })
+
+    const { input: documentation, error } = extractToolInput(response, DOCUMENTATION_TOOL.name)
+    if (error) return sendJson(res, error.status, { error })
+
+    if (
+      !documentation ||
+      typeof documentation !== 'object' ||
+      typeof documentation.patient_summary !== 'string'
+    ) {
+      return sendJson(res, 502, {
+        error: {
+          kind: 'malformed_response',
+          message: 'The structured documentation was missing required fields. Retry the call.',
+        },
+      })
+    }
+
+    return sendJson(res, 200, { documentation, meta: callMeta(response, startedAt) })
+  } catch (err) {
+    console.error('[visit-documentation] failed:', err?.message || err)
+    const described = describeError(err, config.anthropic.model)
+    return sendJson(res, described.status, { error: described })
+  }
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/livekit-token — voice visit access token
 // ---------------------------------------------------------------------------
 
 async function handleLivekitToken(req, res, config) {
@@ -414,7 +523,7 @@ async function handleLivekitToken(req, res, config) {
     return sendJson(res, 500, {
       error: {
         kind: 'config',
-        message: `Video visits are not configured — missing ${missing.join(', ')}. Add them to .env and restart the dev server.`,
+        message: `Voice visits are not configured — missing ${missing.join(', ')}. Add them to .env and restart the dev server.`,
       },
     })
   }
@@ -465,7 +574,7 @@ async function handleLivekitToken(req, res, config) {
       error: {
         kind: 'token_failed',
         message:
-          'Could not generate a video access token. Check LIVEKIT_API_KEY and LIVEKIT_API_SECRET.',
+          'Could not generate a voice access token. Check LIVEKIT_API_KEY and LIVEKIT_API_SECRET.',
       },
     })
   }
@@ -493,19 +602,22 @@ function route(handler, config) {
 }
 
 function attach(server, config) {
+  // `/api/intake/reset` is registered before `/api/intake` because Vite's
+  // middleware matching is prefix-based: the shorter path would otherwise
+  // swallow the reset call.
   server.middlewares.use(
-    '/api/triage/reset',
+    '/api/intake/reset',
     route(async (req, res) => {
       resetClient(clientKey(req))
       sendJson(res, 200, { ok: true, budgetRemaining: budgetRemaining() })
     }, config),
   )
-  server.middlewares.use('/api/triage', route(handleTriage, config))
-  server.middlewares.use('/api/synthesize', route(handleSynthesize, config))
+  server.middlewares.use('/api/intake', route(handleIntake, config))
+  server.middlewares.use('/api/care-packet', route(handleCarePacket, config))
+  server.middlewares.use('/api/visit-documentation', route(handleVisitDocumentation, config))
   server.middlewares.use('/api/livekit-token', route(handleLivekitToken, config))
 }
 
-/** @param {{ apiKey?: string, model?: string, maxTokens?: number, keySource?: string | null }} env */
 /**
  * @param {{
  *   anthropic?: { apiKey?: string, model?: string, maxTokens?: number, keySource?: string },
@@ -535,18 +647,18 @@ export function devApi(env = {}) {
 
       if (!config.anthropic.apiKey) {
         log.warn(
-          '[auricle] ANTHROPIC_API_KEY is not set — triage and synthesis will return a config error. Copy .env.example to .env and add your key.',
+          '[auricle] ANTHROPIC_API_KEY is not set — intake, care packet, and documentation will return a config error. Copy .env.example to .env and add your key.',
         )
       } else {
         log.info(
-          `[auricle] anthropic ready: POST /api/triage, /api/synthesize (model: ${config.anthropic.model})`,
+          `[auricle] anthropic ready: POST /api/intake, /api/care-packet, /api/visit-documentation (model: ${config.anthropic.model})`,
         )
         // Sources are named explicitly because Vite picks up a shell-exported
         // value even with no .env file — without this you can't tell which
         // credential is actually in use.
         log.info(`[auricle] anthropic key from: ${config.anthropic.keySource}`)
         log.info(
-          `[auricle] triage guards: ${LIMITS.MAX_TURNS} turns/session, ${LIMITS.MAX_PER_WINDOW}/min, ${LIMITS.MAX_CALLS_PER_PROCESS} calls/process`,
+          `[auricle] intake guards: ${LIMITS.MAX_TURNS} turns/session, ${LIMITS.MAX_PER_WINDOW}/min, ${LIMITS.MAX_CALLS_PER_PROCESS} calls/process`,
         )
       }
 
@@ -554,7 +666,7 @@ export function devApi(env = {}) {
         config.livekit.url && config.livekit.apiKey && config.livekit.apiSecret
       if (!livekitReady) {
         log.warn(
-          '[auricle] LiveKit is not configured — video visits will show a setup message. Add LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET to .env.',
+          '[auricle] LiveKit is not configured — voice visits will show a setup message. Add LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET to .env.',
         )
       } else {
         log.info(`[auricle] livekit ready: POST /api/livekit-token (${config.livekit.url})`)

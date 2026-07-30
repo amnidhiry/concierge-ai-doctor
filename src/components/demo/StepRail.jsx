@@ -1,41 +1,21 @@
 import { Link } from 'react-router-dom'
+import { VISIT_STAGES, stageStateFor } from '../../domain/models.js'
 
 /**
- * Progress rail across the four demo steps.
+ * Progress rail across the four stages of one bounded visit.
  *
- * Reads entirely from `liveCase.status` rather than the current route, so the
- * rail stays truthful if someone deep-links to /demo/physician before a case
- * exists.
+ * Reads entirely from `liveCase.status` rather than the current route, so the rail
+ * stays truthful if someone deep-links to a later stage before a case exists.
+ *
+ * The stage list and the status mapping live in `src/domain/models.js`, not here —
+ * they are case-shape logic, and keeping them out of the component makes them
+ * testable without a DOM.
  */
-
-const STEPS = [
-  { key: 'intake', to: '/demo', label: 'Patient intake', short: 'Intake' },
-  { key: 'synthesis', to: '/demo/synthesis', label: 'AI synthesis', short: 'Synthesis' },
-  { key: 'review', to: '/demo/physician', label: 'Physician review', short: 'Review' },
-  { key: 'response', to: '/demo/response', label: 'Patient response', short: 'Response' },
-]
-
-/** Maps case status onto which steps are done / active / not yet reachable. */
-function stateFor(stepKey, status) {
-  const reached = {
-    draft_intake: ['intake'],
-    synthesizing: ['intake', 'synthesis'],
-    failed: ['intake', 'synthesis'],
-    awaiting_review: ['intake', 'synthesis', 'review'],
-    physician_sent: ['intake', 'synthesis', 'review', 'response'],
-  }[status] ?? ['intake']
-
-  const activeKey = reached[reached.length - 1]
-  if (stepKey === activeKey) return 'active'
-  if (reached.includes(stepKey)) return 'done'
-  return 'pending'
-}
-
 export function StepRail({ status }) {
   return (
     <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
-      {STEPS.map((step, i) => {
-        const state = stateFor(step.key, status)
+      {VISIT_STAGES.map((stage, i) => {
+        const state = stageStateFor(stage.key, status)
         const reachable = state !== 'pending'
 
         const tone =
@@ -74,22 +54,22 @@ export function StepRail({ status }) {
               )}
             </span>
             <span className="font-mono text-[11px] uppercase tracking-label">
-              <span className="hidden sm:inline">{step.label}</span>
-              <span className="sm:hidden">{step.short}</span>
+              <span className="hidden sm:inline">{stage.label}</span>
+              <span className="sm:hidden">{stage.short}</span>
             </span>
           </span>
         )
 
         return (
-          <li key={step.key} className="flex items-center">
+          <li key={stage.key} className="flex items-center">
             {reachable ? (
-              <Link to={step.to} aria-current={state === 'active' ? 'step' : undefined}>
+              <Link to={stage.path} aria-current={state === 'active' ? 'step' : undefined}>
                 {inner}
               </Link>
             ) : (
               <span aria-disabled="true">{inner}</span>
             )}
-            {i < STEPS.length - 1 && (
+            {i < VISIT_STAGES.length - 1 && (
               <span aria-hidden="true" className="mx-1 hidden h-px w-5 bg-dune-deep sm:block" />
             )}
           </li>

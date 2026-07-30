@@ -1,8 +1,17 @@
 /**
- * Video-visit token fetch and media pre-flight.
+ * Voice-visit token fetch and microphone pre-flight.
  *
- * Framework-free so the logic stays testable and portable (the Flutter client
+ * Framework-free so the logic stays testable and portable (a Flutter client
  * would need the same two steps in the same order).
+ *
+ * ── Audio only, on purpose ─────────────────────────────────────────────────
+ * The visit is a voice call. There is no camera request anywhere in this module,
+ * no video constraint, and no fallback that turns a camera on. That is a product
+ * decision rather than a simplification: a preventive-cardiology expert-opinion
+ * call is a conversation about a record, video adds a consent and retention
+ * surface it doesn't need, and a phone call is the format patients already know
+ * how to have. The server-issued token narrows the publish grant to the
+ * microphone source as well, so "no video" holds even if a client asked for it.
  */
 
 /** Fetches a scoped LiveKit access token for one case and role. */
@@ -51,27 +60,24 @@ export async function fetchVisitToken({ caseId, role, displayName }) {
 }
 
 /**
- * Requests camera and microphone up front.
+ * Requests the microphone up front.
  *
  * Done deliberately *before* connecting rather than letting LiveKit surface the
  * failure, because getUserMedia's error names carry far more actionable detail
  * than a generic connection failure does — and permission problems are the single
  * most likely thing to go wrong in a live demo.
  *
- * The tracks are stopped immediately. Permission persists for the origin, so
+ * The track is stopped immediately. Permission persists for the origin, so
  * LiveKit re-acquires without a second prompt.
- *
- * Returns `{ ok: true, video: boolean }` — `video: false` means audio was
- * obtained but the camera was not, which is a usable call rather than a failure.
  */
-export async function preflightMedia({ wantVideo = true } = {}) {
+export async function preflightMicrophone() {
   if (!navigator.mediaDevices?.getUserMedia) {
     return {
       ok: false,
       error: {
         kind: 'unsupported',
         message:
-          'This browser does not expose camera and microphone access. Chrome, Edge, Safari, or Firefox on a recent version will work.',
+          'This browser does not expose microphone access. Chrome, Edge, Safari, or Firefox on a recent version will work.',
       },
     }
   }
@@ -84,36 +90,16 @@ export async function preflightMedia({ wantVideo = true } = {}) {
       error: {
         kind: 'insecure_context',
         message:
-          'Camera access needs a secure context. Use http://localhost (not a LAN IP) or serve the app over HTTPS.',
+          'Microphone access needs a secure context. Use http://localhost (not a LAN IP) or serve the app over HTTPS.',
       },
     }
   }
 
-  const attempt = async (constraints) => {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints)
-    stream.getTracks().forEach((t) => t.stop())
-  }
-
   try {
-    await attempt({ audio: true, video: wantVideo })
-    return { ok: true, video: wantVideo }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    stream.getTracks().forEach((t) => t.stop())
+    return { ok: true }
   } catch (err) {
-    // A camera already held by another tab or app is the most common failure in
-    // a two-tab demo. Audio-only is a genuinely useful call, so degrade to it
-    // rather than refusing to connect.
-    if (wantVideo && (err?.name === 'NotReadableError' || err?.name === 'AbortError')) {
-      try {
-        await attempt({ audio: true, video: false })
-        return {
-          ok: true,
-          video: false,
-          notice:
-            'The camera is in use elsewhere — most likely the other tab, or another app. Joining with audio only.',
-        }
-      } catch (audioErr) {
-        return { ok: false, error: describeMediaError(audioErr) }
-      }
-    }
     return { ok: false, error: describeMediaError(err) }
   }
 }
@@ -126,47 +112,60 @@ export function describeMediaError(err) {
       return {
         kind: 'permission_denied',
         message:
-          'Camera and microphone access was blocked. Click the camera icon in your browser address bar, allow access, then try again.',
+          'Microphone access was blocked. Click the microphone or lock icon in your browser address bar, allow access, then try again.',
       }
     case 'NotFoundError':
     case 'DevicesNotFoundError':
       return {
         kind: 'no_device',
         message:
-          'No camera or microphone was found. Connect one, or check that it is not disabled at the system level.',
+          'No microphone was found. Connect one, or check that it is not disabled at the system level.',
       }
     case 'NotReadableError':
     case 'TrackStartError':
       return {
         kind: 'device_busy',
         message:
-          'The camera or microphone is already in use by another app or tab. Close the other one and try again.',
-      }
-    case 'OverconstrainedError':
-      return {
-        kind: 'overconstrained',
-        message: 'No device matched the requested video settings.',
+          'The microphone is already in use by another app or tab. Close the other one and try again.',
       }
     case 'SecurityError':
       return {
         kind: 'insecure_context',
-        message: 'The browser blocked media access for this page on security grounds.',
+        message: 'The browser blocked microphone access for this page on security grounds.',
       }
     default:
       return {
         kind: 'media_unknown',
         message: err?.message
-          ? `Could not access camera or microphone: ${err.message}`
-          : 'Could not access the camera or microphone.',
+          ? `Could not access the microphone: ${err.message}`
+          : 'Could not access the microphone.',
       }
   }
 }
 
-/** The URL a patient opens to join a visit in a second tab. */
+/** The URL a patient opens to join their visit in a second tab. */
 export function patientVisitPath(caseId) {
   return `/visit/${encodeURIComponent(caseId)}`
 }
 
 export function patientVisitUrl(caseId) {
   return `${window.location.origin}${patientVisitPath(caseId)}`
+}
+
+/**
+ * Formats elapsed seconds as m:ss for the call timer.
+ *
+ * Guards against a non-finite input rather than trusting the caller. `Math.max(0,
+ * Math.floor(x))` propagates NaN, so a bad value would render "NaN:NaN" in the
+ * call header — visible, alarming, and during a live call the worst possible place
+ * for it. Deliberately not clamped at an hour: a call that overruns its booked
+ * slot should keep counting, because that is exactly when the physician wants to
+ * see the number.
+ */
+export function formatElapsed(totalSeconds) {
+  const parsed = Number(totalSeconds)
+  const safe = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0
+  const minutes = Math.floor(safe / 60)
+  const seconds = safe % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
 }

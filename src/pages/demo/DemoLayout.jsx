@@ -6,8 +6,8 @@ import { Logo } from '../../components/layout/SiteNav.jsx'
 import { Button, Container } from '../../components/ui/primitives.jsx'
 
 /**
- * Demo chrome: its own header with the step rail, so the flow reads as a
- * product surface rather than another marketing page.
+ * Demo chrome: its own header with the step rail, so the flow reads as a product
+ * surface rather than another marketing page.
  */
 export function DemoLayout() {
   const { liveCase, hasIntake, resetDemo } = useDemo()
@@ -62,10 +62,14 @@ export function DemoLayout() {
       <footer className="border-t border-dune bg-sandstone-raised">
         <Container width="wide" className="py-6">
           <p className="max-w-3xl text-xs leading-relaxed text-umber">
-            <strong className="font-medium text-ink-muted">Prototype.</strong> Step 2 makes a real
-            Anthropic API call; the physician panel below the live case is static sample data, and
-            the video button is a placeholder. Nothing here is medical advice, and no data persists
-            past a page refresh. Use synthetic case material only.
+            <strong className="font-medium text-ink-muted">Prototype.</strong> The care packet and the
+            documentation are real Anthropic API calls; the voice call is real WebRTC audio. There is
+            no speech-to-text — the transcript in stage 4 is typed in by hand, and the sample visits
+            beside the live one are invented records. Nothing here is medical advice, nothing is
+            delivered anywhere, and no data survives a page refresh.{' '}
+            <strong className="font-medium text-ink-muted">
+              Use synthetic case material only — never real patient information.
+            </strong>
           </p>
         </Container>
       </footer>

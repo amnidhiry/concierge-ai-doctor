@@ -35,7 +35,7 @@ export function Logo({ tone = 'dark' }) {
  * rather than a peer nav item — the supply side of the business is not what a
  * patient landing here needs to parse first.
  */
-const PATIENT_LINKS = [{ to: '/services', label: 'Services' }]
+const PATIENT_LINKS = [{ to: '/the-visit', label: 'The visit' }]
 
 export function SiteNav() {
   const [open, setOpen] = useState(false)
@@ -80,7 +80,7 @@ export function SiteNav() {
             </NavLink>
             <span aria-hidden="true" className="h-4 w-px bg-dune" />
             <Button as="link" to="/demo" variant="primary">
-              Start a review
+              Book a call
             </Button>
           </nav>
 
@@ -120,7 +120,7 @@ export function SiteNav() {
               ))}
             </nav>
             <Button as="link" to="/demo" variant="primary" className="mt-4 w-full">
-              Start a review
+              Book a call
             </Button>
           </Container>
         </div>

@@ -1,11 +1,11 @@
 /**
- * Abuse and cost guards for the triage endpoint.
+ * Abuse and cost guards for the intake endpoint.
  *
- * The synthesis endpoint is one call per submitted case, so it is largely
- * self-limiting. The triage agent is not: it is a chat loop reachable by anyone
- * who can load the page, and each turn is a billable request. Left ungoverned, a
- * single tab left open on a loop — or someone deciding to use it as a free
- * chatbot — is real money.
+ * The care-packet and documentation endpoints are one call per submitted case,
+ * so they are largely self-limiting. The intake agent is not: it is a chat loop
+ * reachable by anyone who can load the page, and each turn is a billable
+ * request. Left ungoverned, a single tab left open on a loop — or someone
+ * deciding to use it as a free chatbot — is real money.
  *
  * Every limit is enforced server-side. The client mirrors some of them for a
  * better UX (disabled send button, character counter), but a client-side cap is
@@ -24,9 +24,9 @@ export const LIMITS = {
   MAX_MESSAGE_CHARS: 2_000,
   /** Characters across the whole transcript sent back to the model. */
   MAX_TRANSCRIPT_CHARS: 24_000,
-  /** Off-topic replies before the session's triage access is revoked. */
+  /** Off-topic replies before the session's intake access is revoked. */
   MAX_OFF_TOPIC_STRIKES: 3,
-  /** Minimum gap between two triage calls from one client. */
+  /** Minimum gap between two intake calls from one client. */
   MIN_INTERVAL_MS: 1_200,
   /** Sliding-window cap per client. */
   WINDOW_MS: 60_000,
@@ -36,7 +36,7 @@ export const LIMITS = {
    * runaway loop or a tab left open overnight — not a per-user limit.
    */
   MAX_CALLS_PER_PROCESS: 120,
-  /** Output cap per triage reply. Replies are meant to be under 90 words. */
+  /** Output cap per intake reply. Replies are meant to be under 90 words. */
   MAX_OUTPUT_TOKENS: 700,
 }
 
@@ -70,7 +70,7 @@ export function clientKey(req) {
  * Runs every pre-flight check. Returns null when the call may proceed, or a
  * `{ status, kind, message }` to send back.
  */
-export function checkTriageAllowed({ key, turnCount, message, transcriptChars }) {
+export function checkIntakeAllowed({ key, turnCount, message, transcriptChars }) {
   const now = Date.now()
   const entry = clientFor(key)
 
@@ -79,7 +79,7 @@ export function checkTriageAllowed({ key, turnCount, message, transcriptChars })
       status: 403,
       kind: 'scope_blocked',
       message:
-        'Triage chat is disabled for this session after repeated off-topic requests. Reset the demo to start over.',
+        'Intake chat is disabled for this session after repeated off-topic requests. Reset the demo to start over.',
     }
   }
 
@@ -87,7 +87,7 @@ export function checkTriageAllowed({ key, turnCount, message, transcriptChars })
     return {
       status: 429,
       kind: 'budget_exhausted',
-      message: `This server process has hit its ${LIMITS.MAX_CALLS_PER_PROCESS}-call triage budget. Restart the dev server to reset it.`,
+      message: `This server process has hit its ${LIMITS.MAX_CALLS_PER_PROCESS}-call intake budget. Restart the dev server to reset it.`,
     }
   }
 
@@ -107,7 +107,7 @@ export function checkTriageAllowed({ key, turnCount, message, transcriptChars })
     return {
       status: 429,
       kind: 'turn_limit',
-      message: `Intake chat is capped at ${LIMITS.MAX_TURNS} messages. Submit the case for synthesis, or reset to start over.`,
+      message: `Intake chat is capped at ${LIMITS.MAX_TURNS} messages. Submit your intake, or reset to start over.`,
     }
   }
 
@@ -116,7 +116,7 @@ export function checkTriageAllowed({ key, turnCount, message, transcriptChars })
       status: 413,
       kind: 'too_long',
       message:
-        'This conversation has grown too long to continue. Submit it for synthesis, or reset the demo.',
+        'This conversation has grown too long to continue. Submit your intake, or reset the demo.',
     }
   }
 
@@ -143,7 +143,7 @@ export function checkTriageAllowed({ key, turnCount, message, transcriptChars })
 }
 
 /** Records a call that is about to be made. */
-export function recordTriageCall(key) {
+export function recordIntakeCall(key) {
   const entry = clientFor(key)
   const now = Date.now()
   entry.last = now
@@ -170,4 +170,16 @@ export function resetClient(key) {
 
 export function budgetRemaining() {
   return Math.max(0, LIMITS.MAX_CALLS_PER_PROCESS - processCalls)
+}
+
+/**
+ * Test-only reset of the process-wide counter.
+ *
+ * Exported rather than reached at via module internals so the automated checks
+ * can exercise the budget ceiling without leaving the guard permanently tripped
+ * for the rest of the test run.
+ */
+export function __resetProcessBudgetForTests() {
+  processCalls = 0
+  clients.clear()
 }
