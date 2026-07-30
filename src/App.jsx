@@ -5,6 +5,7 @@ import { Landing } from './pages/Landing.jsx'
 import { Services } from './pages/Services.jsx'
 import { ForPhysicians } from './pages/ForPhysicians.jsx'
 import { NotFound } from './pages/NotFound.jsx'
+import { VisitPage } from './pages/VisitPage.jsx'
 import { DemoLayout } from './pages/demo/DemoLayout.jsx'
 import { IntakePage } from './pages/demo/IntakePage.jsx'
 import { SynthesisPage } from './pages/demo/SynthesisPage.jsx'
@@ -29,6 +30,11 @@ export function App() {
           <Route path="/for-physicians" element={<ForPhysicians />} />
           <Route path="*" element={<NotFound />} />
         </Route>
+
+        {/* Standalone video visit. Outside /demo and outside SiteLayout: it is
+            opened in a second tab, which has none of the first tab's in-memory
+            state, so everything it needs comes from the URL. */}
+        <Route path="/visit/:caseId" element={<VisitPage />} />
 
         {/* Interactive product demo — Steps 1–4 */}
         <Route path="/demo" element={<DemoLayout />}>

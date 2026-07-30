@@ -1,7 +1,7 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useDemo } from '../../context/DemoProvider.jsx'
 import { AiDraftBadge } from '../../components/ui/AiDraftBadge.jsx'
-import { JoinVideoVisitButton } from '../../components/physician/JoinVideoVisitButton.jsx'
+import { PatientJoinVisitButton } from '../../components/video/PatientJoinVisitButton.jsx'
 import { Button, Card, Container, Eyebrow } from '../../components/ui/primitives.jsx'
 
 /**
@@ -63,8 +63,8 @@ export function PatientResponsePage() {
                 Have a follow-up question? It's included in your plan. For anything urgent, seek
                 in-person care.
               </p>
-              <JoinVideoVisitButton
-                patientName={physician.name}
+              <PatientJoinVisitButton
+                caseId={liveCase.id}
                 variant="secondary"
                 className="shrink-0"
               />
