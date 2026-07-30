@@ -1,3 +1,4 @@
+import { forwardRef } from 'react'
 import { Link } from 'react-router-dom'
 
 /** Layout + typographic primitives shared by the marketing site and the demo. */
@@ -55,13 +56,17 @@ const buttonVariants = {
   verified: 'bg-verified text-white hover:bg-verified/90',
 }
 
-export function Button({ variant = 'primary', className = '', as, to, ...props }) {
+/** forwardRef so callers can manage focus (e.g. focusing a modal's close button). */
+export const Button = forwardRef(function Button(
+  { variant = 'primary', className = '', as, to, ...props },
+  ref,
+) {
   const classes = `${buttonBase} ${buttonVariants[variant]} ${className}`
   if (as === 'link') {
-    return <Link to={to} className={classes} {...props} />
+    return <Link ref={ref} to={to} className={classes} {...props} />
   }
-  return <button className={classes} {...props} />
-}
+  return <button ref={ref} className={classes} {...props} />
+})
 
 export function Card({ children, className = '', as: Tag = 'div' }) {
   return (

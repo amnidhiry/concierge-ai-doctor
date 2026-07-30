@@ -294,12 +294,13 @@ function attach(server, config) {
   })
 }
 
-/** @param {{ apiKey?: string, model?: string, maxTokens?: number }} env */
+/** @param {{ apiKey?: string, model?: string, maxTokens?: number, keySource?: string | null }} env */
 export function anthropicProxy(env = {}) {
   const config = {
     apiKey: env.apiKey || '',
     model: env.model || DEFAULT_MODEL,
     maxTokens: Number(env.maxTokens) || DEFAULT_MAX_TOKENS,
+    keySource: env.keySource || null,
   }
 
   return {
@@ -312,6 +313,11 @@ export function anthropicProxy(env = {}) {
       } else {
         server.config.logger.info(
           `[concierge] synthesis proxy ready at POST /api/synthesize (model: ${config.model})`,
+        )
+        // Named explicitly because Vite picks up a shell-exported key even with
+        // no .env file — without this line you can't tell which key is billing.
+        server.config.logger.info(
+          `[concierge] API key loaded from: ${config.keySource ?? 'unknown source'}`,
         )
       }
       attach(server, config)
