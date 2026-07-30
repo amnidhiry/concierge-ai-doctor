@@ -51,6 +51,21 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
-    server: { port: 5173 },
+    server: {
+      port: 5173,
+      /**
+       * Hosts permitted in the Host header. Vite rejects anything else to block
+       * DNS-rebinding attacks against the dev server.
+       *
+       * Entries are hostnames, not URLs — no scheme and no path, since Vite
+       * compares against the Host header, which carries neither.
+       *
+       * Quick-tunnel hostnames are regenerated every time `cloudflared` restarts,
+       * so this one will stop matching after the tunnel is restarted. Swap in
+       * '.trycloudflare.com' (leading dot = that domain and all subdomains) to
+       * cover every future quick tunnel without editing this file again.
+       */
+      allowedHosts: ['laundry-graduate-proceeds-diverse.trycloudflare.com'],
+    },
   }
 })
