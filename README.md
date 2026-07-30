@@ -38,6 +38,20 @@ Two things worth knowing:
 | `ANTHROPIC_MODEL` | `claude-sonnet-4-6` | Structured output is forced via tool + `tool_choice`, which works on every current model — swap in `claude-opus-5` or `claude-sonnet-5` without code changes. |
 | `ANTHROPIC_MAX_TOKENS` | `8000` | Raise if you see a `max_tokens` stop reason on long cases. |
 
+### LiveKit (video visits)
+
+Video visits need a [LiveKit Cloud](https://cloud.livekit.io) project — free tier is ample for two participants. Create a project, then from its dashboard:
+
+| Variable | Where to find it |
+|---|---|
+| `LIVEKIT_URL` | Project overview / Settings → Project. Starts with `wss://` |
+| `LIVEKIT_API_KEY` | Settings → **Keys**. Starts with `API` |
+| `LIVEKIT_API_SECRET` | Settings → **Keys**. **Shown once at creation** — if lost, delete the key and mint a new pair |
+
+All three go in `.env`. The API secret is the credential for the *entire project* — it can mint a token for any room — so it is read only in `server/livekitToken.js` and never reaches the browser. The token endpoint returns the WebSocket URL alongside the token, which is why there is no `VITE_LIVEKIT_URL`: all three values stay server-side and the browser learns only the one non-secret value it needs.
+
+Without these, video shows an in-UI setup message and the rest of the app works normally.
+
 Expect **10–20s** per synthesis on a real case (non-streaming, `effort: medium`). The UI shows real elapsed time and adds a "still working" note past 20s.
 
 ---
@@ -56,18 +70,53 @@ Worth being precise about, since the whole point is demonstrating the real pipel
 | **Error handling** | Real typed SDK errors mapped to distinct in-UI states. |
 | **Physician edits** | Real, and they persist in state — what you edit is what Step 4 shows. |
 | **Step 1 → 4 data flow** | One case object threaded through all four steps. |
+| **Step 1 triage agent** | Every patient message is a live model call. Returns the reply *and* structured intake state, rendered live beside the chat. |
+| **Emergency routing** | The agent sets `scope: "emergency"` on possible acute presentations, which halts intake and directs to in-person care. |
+| **Abuse guards** | Turn caps, rate limits, message-length caps, and off-topic strike escalation — all enforced server-side (`server/guards.js`). |
+| **Video visits** | Real LiveKit WebRTC between two browser contexts. Server-issued per-participant tokens, real camera/mic, mute and camera toggles, leave. |
 
 ### Mocked or placeholder
 
 | | |
 |---|---|
 | **Physician panel list** | Static sample rows from `src/domain/mockPanel.js`, below the one live case. Marked as samples and not selectable. |
-| **"Join Video Visit"** | Placeholder modal. No LiveKit, no WebRTC, no fake call UI. |
+| **Video participant identity** | Both seats are unauthenticated. Anyone with the visit link can join the room. |
 | **Login / auth** | None. The dashboard shows a hardcoded physician identity. |
 | **Persistence** | React context only. A page refresh clears everything. |
 | **"Sending" a response** | Updates state and advances the flow. No notification or delivery. |
-| **Intake coordinator turns** | Static scripted prompts in the chat, not model output. Labelled as coordinator, not AI. |
+| **Triage agent's opening turn** | Static, so it renders instantly and costs nothing. Every turn after it is a real model call. |
+| **Call recording / transcription / screen share** | None. Deliberately out of scope for this pass. |
 | **Panel economics figures** | Target operating model for the pitch, not measured results. Labelled as such on the page. |
+
+---
+
+## Running a video visit
+
+The demo moment is two browser tabs connecting to each other for real.
+
+1. Go to **`/demo/physician`** and click **Join video visit** on the case card.
+2. Click **Allow camera and join** and accept the browser permission prompt.
+3. Click **Copy patient link** in the modal header — that's `/visit/<caseId>`.
+4. Open that link in a **second tab** and join. The two tiles connect.
+
+Step 4 of the demo flow also has a patient-side **Join video visit** button, which opens the same route in a new tab.
+
+### Both participants in one browser
+
+This is a demo constraint worth understanding rather than working around:
+
+- **Expect audio feedback.** Each tab plays the other's audio through your speakers and back into your mic. **Use headphones, or mute one side.** The pre-join screen says so.
+- **The camera may only attach to one tab.** Chrome generally shares a camera across tabs; Safari often does not. If the second tab reports the camera is busy, it offers **Join with audio only** — an audio-only leg still proves the WebRTC connection.
+- **Identity is keyed to role**, not to the browser. LiveKit disconnects an existing participant when a second joins with the same identity, so a shared identity would have each tab silently kicking the other — indistinguishable from a broken connection. `physician-<caseId>` and `patient-<caseId>` avoid that.
+
+Two *physical* devices work too, and avoid both problems — but they need the app reachable over HTTPS or via a tunnel, since `getUserMedia` requires a secure context and a LAN IP over plain HTTP is not one.
+
+### Token scope
+
+`POST /api/livekit-token` takes a `caseId` and a `role`, and returns a token good for exactly one room and one identity:
+
+- Room names are **derived** from the case ID, never accepted verbatim, so a client can't request an arbitrary room and land in another case's visit. `caseId` is charset-validated; `role` must be `physician` or `patient`.
+- The grant allows publish and subscribe only. `roomAdmin`, `roomCreate`, and `canPublishData` are all off. TTL is 30 minutes.
 
 ---
 
@@ -82,7 +131,9 @@ Worth being precise about, since the whole point is demonstrating the real pipel
 ## Architecture
 
 ```
-server/anthropicProxy.js      Vite middleware: POST /api/synthesize (Node — holds the key)
+server/devApi.js              Vite middleware: all /api routes (Node — holds the keys)
+server/livekitToken.js        LiveKit token minting + room/role validation
+server/guards.js              Triage abuse and cost guards
 src/prompts/                  System prompt + tool schema, isolated from UI
 src/domain/                   Framework-free data shapes (the Flutter-port boundary)
 src/lib/api.js                Client fetch wrapper; one error contract
@@ -90,6 +141,7 @@ src/context/DemoProvider.jsx  Session state for Steps 1–4
 src/components/ui/            Primitives + AiDraftBadge
 src/components/demo/          Intake, processing, draft document, errors
 src/components/physician/     Panel, editor, video placeholder
+src/components/video/         LiveKit call UI (lazy-loaded chunk)
 src/pages/                    Marketing pages
 src/pages/demo/               Demo flow routes
 ```
@@ -138,9 +190,14 @@ Today: React context, cleared on refresh. Needed:
 - **Auth** — patient and physician roles with real sessions. The current physician identity is hardcoded.
 - **Async delivery** — sending a response should actually notify the patient (email/SMS/push) rather than advancing local state.
 
-### 3. LiveKit video
+### 3. Video visit hardening
 
-`src/components/physician/JoinVideoVisitButton.jsx` is structurally isolated for this. It owns its trigger, modal, and state, and receives only a patient name — so real video means replacing that file's body (room-token endpoint, `<LiveKitRoom>`, track subscriptions, device permissions) with nothing else touched.
+Video is now real (Phase 2), but two things stand between it and production:
+
+- **Per-participant auth.** The token endpoint issues a token to anyone who asks for a `caseId` and a `role`. Nothing verifies that the caller *is* that patient or that physician, so the visit link is effectively a bearer credential — anyone holding it can join. A real version issues tokens only to an authenticated session whose identity is checked against the case's participants, and treats the room name as an internal detail rather than something derivable from a URL.
+- **Lifecycle.** There is no waiting room, no scheduling, no "physician has joined" notification, and no server-side room cleanup. Rooms are created implicitly on first join and expire on LiveKit's default timeout.
+
+Also out of scope by design and easy to add later: recording (needs a retention policy and consent capture before it should exist at all), transcription, and screen sharing.
 
 ### 4. Synthesis improvements
 
@@ -169,4 +226,4 @@ Out of scope for this pass and genuinely blocking for real use: a BAA with the m
 
 ## Stack
 
-React 18 · Vite 5 · Tailwind CSS 3.4 (utility classes only, no compiler-dependent features) · React Router 6 · `@anthropic-ai/sdk`
+React 18 · Vite 5 · Tailwind CSS 3.4 (utility classes only, no compiler-dependent features) · React Router 6 · `@anthropic-ai/sdk` · `livekit-server-sdk` · `@livekit/components-react`
