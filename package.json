@@ -1,0 +1,25 @@
+{
+  "name": "concierge-ai-doctor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Demo-day prototype for Concierge AI Doctor — marketing site plus an end-to-end second-opinion product demo backed by a real Claude API synthesis call.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    font-optical-sizing: auto;
+  }
+
+  /* Keyboard focus is visible everywhere; mouse clicks don't get a ring. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-pulse ring-offset-2 ring-offset-paper;
+  }
+
+  textarea,
+  input,
+  button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  /* Small monospace field label. Used for clinical metadata — the kind of
+     label you'd see on a chart field rather than in marketing copy. */
+  .field-label {
+    @apply font-mono text-[11px] uppercase tracking-label text-slate;
+  }
+
+  .hairline {
+    @apply border-t border-mist;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* Kill every animation and transition rather than tuning them individually,
+     so a component added later can't reintroduce motion by accident. The
+     Step 2 processing state stays legible without motion because it also
+     reports elapsed seconds as text. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
