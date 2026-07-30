@@ -75,7 +75,11 @@ export function PhysicianPage() {
                     ` · submitted ${new Date(liveCase.intake.submittedAt).toLocaleTimeString()}`}
                 </p>
               </div>
-              <JoinVideoVisitButton patientName={liveCase.patient.name} />
+              <JoinVideoVisitButton
+                caseId={liveCase.id}
+                patientName={liveCase.patient.name}
+                displayName={`${physician.name}, ${physician.credential}`}
+              />
             </div>
           </Card>
 
