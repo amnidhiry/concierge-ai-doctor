@@ -54,6 +54,17 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       /**
+       * Keep the watcher off tooling directories.
+       *
+       * `.claude/` can contain git worktrees — full copies of this project,
+       * index.html included. Vite watches the project root, so activity in a
+       * worktree triggers spurious full page reloads of the real app, which
+       * during a live demo reads as the page resetting itself.
+       */
+      watch: {
+        ignored: ['**/.claude/**', '**/dist/**'],
+      },
+      /**
        * Hosts permitted in the Host header. Vite rejects anything else to block
        * DNS-rebinding attacks against the dev server.
        *

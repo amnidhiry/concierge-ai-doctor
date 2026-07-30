@@ -31,3 +31,6 @@ npm-debug.log*
 .idea
 .vscode/*
 !.vscode/extensions.json
+
+# Local agent tooling — may contain git worktrees (full project copies).
+.claude/
