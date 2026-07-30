@@ -8,6 +8,21 @@ dist-ssr
 .env.*
 !.env.example
 
+# Physician portraits.
+#
+# Excluded because this repository is public. Local use of a third-party image is
+# one risk calculation; committing it here would be redistribution of a
+# copyrighted work under a public URL, which is a different and larger one.
+# public/dr-imani-reyes.jpg carries an embedded EXIF copyright notice
+# (Abel Mitjà Varela) and is a stock-library comp, not a licensed asset.
+#
+# A fresh clone therefore renders the document photo slot instead of a portrait,
+# which is the correct default. To ship a portrait for real, license one (or use
+# an Unsplash/Pexels image, whose licenses permit commercial use), drop it in
+# /public, and remove the matching line here.
+public/dr-imani-reyes.jpg
+public/portraits/
+
 .DS_Store
 *.log
 npm-debug.log*

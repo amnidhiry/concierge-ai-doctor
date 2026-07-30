@@ -64,6 +64,10 @@ export function PhysicianIdentity({
   focus = [],
   photoUrl = null,
   photoAlt = '',
+  // Object-position for the crop. The slot is 4:5 portrait, so a landscape
+  // source loses its sides — biasing upward keeps the face rather than centring
+  // on the torso.
+  photoPosition = 'center 22%',
   placeholder = true,
   className = '',
 }) {
@@ -80,6 +84,7 @@ export function PhysicianIdentity({
             height={200}
             loading="lazy"
             decoding="async"
+            style={{ objectPosition: photoPosition }}
             className="aspect-[4/5] w-full max-w-[8rem] border border-dune object-cover"
           />
         ) : (
