@@ -14,11 +14,11 @@ import { URGENCY_ORDER } from '../../domain/models.js'
 
 function Section({ label, children, count }) {
   return (
-    <section className="border-t border-mist pt-5">
+    <section className="border-t border-dune pt-5">
       <div className="flex items-baseline gap-2.5">
         <h3 className="field-label">{label}</h3>
         {typeof count === 'number' && (
-          <span className="font-mono text-[10px] text-slate-light">{count}</span>
+          <span className="font-mono text-[10px] text-umber-light">{count}</span>
         )}
       </div>
       <div className="mt-3">{children}</div>
@@ -27,14 +27,14 @@ function Section({ label, children, count }) {
 }
 
 function Bullets({ items, tone = 'ink' }) {
-  if (!items?.length) return <p className="text-sm italic text-slate-light">None noted.</p>
+  if (!items?.length) return <p className="text-sm italic text-umber-light">None noted.</p>
   return (
     <ul className="space-y-2">
       {items.map((item, i) => (
         <li key={i} className="flex gap-2.5 text-[15px] leading-relaxed text-ink-muted">
           <span
             className={`mt-2 h-1 w-1 shrink-0 rounded-full ${
-              tone === 'draft' ? 'bg-draft' : 'bg-mist-deep'
+              tone === 'draft' ? 'bg-draft' : 'bg-dune-deep'
             }`}
           />
           <span>{typeof item === 'string' ? item : JSON.stringify(item)}</span>
@@ -55,14 +55,14 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
   )
 
   return (
-    <article className="overflow-hidden rounded-lg border border-mist bg-paper-raised shadow-card">
-      <header className="border-b border-mist bg-mist/25 px-5 py-4 sm:px-6">
+    <article className="overflow-hidden rounded-lg border border-dune bg-sandstone-raised shadow-card">
+      <header className="border-b border-dune bg-dune/25 px-5 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="field-label">Second-opinion draft</p>
           <AiDraftBadge state={reviewed ? 'reviewed' : 'pending'} />
         </div>
         {meta && (
-          <p className="mt-2.5 font-mono text-[11px] text-slate">
+          <p className="mt-2.5 font-mono text-[11px] text-umber">
             {meta.model}
             {typeof meta.elapsedMs === 'number' && ` · ${(meta.elapsedMs / 1000).toFixed(1)}s`}
             {meta.usage?.outputTokens != null && ` · ${meta.usage.outputTokens} output tokens`}
@@ -73,8 +73,8 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
       <div className="space-y-5 px-5 py-5 sm:px-6">
         {/* Safety first — before anything a reader might stop scrolling on. */}
         {safetyFlags.length > 0 && (
-          <div className="rounded-md border border-alert/30 bg-alert-wash px-4 py-3.5">
-            <p className="field-label text-alert">Flagged for physician attention</p>
+          <div className="rounded-md border border-crimson/30 bg-crimson-wash px-4 py-3.5">
+            <p className="field-label text-crimson">Flagged for physician attention</p>
             <ul className="mt-2.5 space-y-2">
               {safetyFlags.map((flag, i) => (
                 <li key={i} className="flex flex-wrap items-start gap-2 text-[15px] leading-relaxed text-ink">
@@ -124,12 +124,12 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
             label="Differential considerations"
             count={draft.differential_considerations.length}
           >
-            <p className="mb-4 text-[13px] leading-relaxed text-slate">
+            <p className="mb-4 text-[13px] leading-relaxed text-umber">
               Possibilities for the physician to confirm or exclude — not conclusions.
             </p>
             <div className="space-y-4">
               {draft.differential_considerations.map((item, i) => (
-                <div key={i} className="rounded-md border border-mist bg-paper px-4 py-3.5">
+                <div key={i} className="rounded-md border border-dune bg-sandstone px-4 py-3.5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="text-[15px] font-medium leading-snug text-ink">
                       {item.consideration}
@@ -150,7 +150,7 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
                       </div>
                     </div>
                     <div>
-                      <p className="text-[12px] font-medium uppercase tracking-wide text-slate">
+                      <p className="text-[12px] font-medium uppercase tracking-wide text-umber">
                         Against / missing
                       </p>
                       <div className="mt-1.5">
@@ -175,7 +175,7 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
                   <span className="font-mono text-[13px] text-draft">{String(i + 1).padStart(2, '0')}</span>
                   <div>
                     <p className="text-[15px] leading-relaxed text-ink">{item.question}</p>
-                    <p className="mt-1 text-[13px] leading-relaxed text-slate">
+                    <p className="mt-1 text-[13px] leading-relaxed text-umber">
                       {item.why_it_matters}
                     </p>
                   </div>
@@ -183,7 +183,7 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
               ))}
             </ol>
           ) : (
-            <p className="text-sm italic text-slate-light">
+            <p className="text-sm italic text-umber-light">
               The model raised no open questions for this case.
             </p>
           )}
@@ -195,7 +195,7 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
               {draft.suggested_next_steps.map((item, i) => (
                 <li key={i}>
                   <p className="text-[15px] leading-relaxed text-ink">{item.step}</p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-slate">{item.rationale}</p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-umber">{item.rationale}</p>
                 </li>
               ))}
             </ul>
@@ -206,7 +206,7 @@ export function DraftDocument({ draft, meta, reviewed = false }) {
           {draft.data_gaps?.length ? (
             <Bullets items={draft.data_gaps} tone="draft" />
           ) : (
-            <p className="text-sm italic text-slate-light">
+            <p className="text-sm italic text-umber-light">
               The model identified no material gaps in the submitted record.
             </p>
           )}

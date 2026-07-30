@@ -24,11 +24,11 @@ function Row({ name, meta, condition, summary, status, live, selected, onSelect 
   const statusMeta = STATUS_META[status] ?? STATUS_META.intake
   const interactive = Boolean(live)
 
-  const base = 'w-full border-b border-mist px-4 py-3.5 text-left transition-colors'
+  const base = 'w-full border-b border-dune px-4 py-3.5 text-left transition-colors'
   const state = selected
     ? 'bg-pulse-wash'
     : interactive
-      ? 'hover:bg-mist/40'
+      ? 'hover:bg-dune/40'
       : 'opacity-60'
 
   const Tag = interactive ? 'button' : 'div'
@@ -41,17 +41,17 @@ function Row({ name, meta, condition, summary, status, live, selected, onSelect 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[15px] font-medium text-ink">{name}</p>
-          <p className="mt-0.5 truncate text-[13px] text-slate">{condition}</p>
+          <p className="mt-0.5 truncate text-[13px] text-umber">{condition}</p>
         </div>
         <Badge tone={statusMeta.tone} className="shrink-0">
           {statusMeta.label}
         </Badge>
       </div>
-      <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-slate">{summary}</p>
+      <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-umber">{summary}</p>
       <div className="mt-2 flex items-center gap-2">
-        <p className="font-mono text-[10px] uppercase tracking-label text-slate-light">{meta}</p>
+        <p className="font-mono text-[10px] uppercase tracking-label text-umber-light">{meta}</p>
         {!interactive && (
-          <span className="font-mono text-[10px] uppercase tracking-label text-slate-light">
+          <span className="font-mono text-[10px] uppercase tracking-label text-umber-light">
             · sample row
           </span>
         )}
@@ -74,8 +74,8 @@ export function PanelList({ liveCase, selectedId, onSelect }) {
         : 'Awaiting intake submission.')
 
   return (
-    <div className="overflow-hidden rounded-lg border border-mist bg-paper-raised">
-      <div className="flex items-center justify-between gap-3 border-b border-mist bg-mist/30 px-4 py-3">
+    <div className="overflow-hidden rounded-lg border border-dune bg-sandstone-raised">
+      <div className="flex items-center justify-between gap-3 border-b border-dune bg-dune/30 px-4 py-3">
         <p className="field-label">Panel · {MOCK_PANEL.length + 1} patients</p>
         {needsReview > 0 && <Badge tone="draft">{needsReview} need review</Badge>}
       </div>
@@ -104,7 +104,7 @@ export function PanelList({ liveCase, selectedId, onSelect }) {
         ))}
       </div>
 
-      <p className="border-t border-mist bg-mist/20 px-4 py-3 text-xs leading-relaxed text-slate">
+      <p className="border-t border-dune bg-dune/20 px-4 py-3 text-xs leading-relaxed text-umber">
         Only the live case carries real model output. The rows below it are static sample data and
         are not selectable.
       </p>

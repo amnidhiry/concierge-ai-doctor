@@ -19,7 +19,7 @@ export function DraftEditor({ aiDraft, value, onChange, onSend, sent, sentAt, re
 
   if (sent) {
     return (
-      <div className="overflow-hidden rounded-lg border border-verified/30 bg-paper-raised">
+      <div className="overflow-hidden rounded-lg border border-verified/30 bg-sandstone-raised">
         <div className="border-b border-verified/20 bg-verified-wash px-5 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="field-label text-verified">Sent to patient</p>
@@ -38,13 +38,13 @@ export function DraftEditor({ aiDraft, value, onChange, onSend, sent, sentAt, re
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-mist bg-paper-raised">
-      <div className="border-b border-mist bg-mist/25 px-5 py-4">
+    <div className="overflow-hidden rounded-lg border border-dune bg-sandstone-raised">
+      <div className="border-b border-dune bg-dune/25 px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="field-label">Reply to patient · editable</p>
           <AiDraftBadge />
         </div>
-        <p className="mt-2 text-[13px] leading-relaxed text-slate">
+        <p className="mt-2 text-[13px] leading-relaxed text-umber">
           Seeded with the AI draft. Edit freely — what you send is what the patient sees.
         </p>
       </div>
@@ -61,14 +61,14 @@ export function DraftEditor({ aiDraft, value, onChange, onSend, sent, sentAt, re
             setConfirming(false)
           }}
           rows={14}
-          className="w-full resize-y rounded-md border border-mist-deep bg-paper px-4 py-3.5 text-[15px] leading-relaxed text-ink focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse"
+          className="w-full resize-y rounded-md border border-dune-deep bg-sandstone px-4 py-3.5 text-[15px] leading-relaxed text-ink focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse"
           placeholder="Write the response the patient will receive…"
         />
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[13px] text-slate">
+          <p className="text-[13px] text-umber">
             {empty ? (
-              <span className="text-alert">Empty — nothing to send.</span>
+              <span className="text-crimson">Empty — nothing to send.</span>
             ) : dirty ? (
               <>
                 <span className="text-verified">Edited by you.</span> {value.length.toLocaleString()}{' '}

@@ -15,7 +15,7 @@ export function Container({ children, className = '', width = 'default' }) {
 }
 
 export function Eyebrow({ children, tone = 'slate' }) {
-  const tones = { slate: 'text-slate', pulse: 'text-pulse', light: 'text-mist-deep' }
+  const tones = { slate: 'text-umber', pulse: 'text-pulse', light: 'text-dune-deep' }
   return <p className={`field-label ${tones[tone]}`}>{children}</p>
 }
 
@@ -26,7 +26,7 @@ export function SectionHeading({ eyebrow, title, lede, align = 'left', tone = 'd
       {eyebrow && <Eyebrow tone={tone === 'light' ? 'light' : 'slate'}>{eyebrow}</Eyebrow>}
       <h2
         className={`mt-3 text-balance text-3xl leading-[1.15] sm:text-4xl ${
-          tone === 'light' ? 'text-paper' : 'text-ink'
+          tone === 'light' ? 'text-sandstone' : 'text-ink'
         }`}
       >
         {title}
@@ -34,7 +34,7 @@ export function SectionHeading({ eyebrow, title, lede, align = 'left', tone = 'd
       {lede && (
         <p
           className={`mt-4 text-[17px] leading-relaxed ${
-            tone === 'light' ? 'text-mist-deep' : 'text-slate'
+            tone === 'light' ? 'text-dune-deep' : 'text-umber'
           }`}
         >
           {lede}
@@ -49,10 +49,10 @@ const buttonBase =
 
 const buttonVariants = {
   primary: 'bg-pulse text-white hover:bg-pulse-hover',
-  secondary: 'bg-ink text-paper hover:bg-ink-soft',
-  outline: 'border border-mist-deep bg-paper-raised text-ink hover:border-slate hover:bg-mist/40',
+  secondary: 'bg-ink text-sandstone hover:bg-ink-soft',
+  outline: 'border border-dune-deep bg-sandstone-raised text-ink hover:border-umber hover:bg-dune/40',
   ghost: 'text-pulse hover:bg-pulse-wash',
-  onDark: 'bg-paper text-ink hover:bg-mist',
+  onDark: 'bg-sandstone text-ink hover:bg-dune',
   verified: 'bg-verified text-white hover:bg-verified/90',
 }
 
@@ -71,7 +71,7 @@ export const Button = forwardRef(function Button(
 export function Card({ children, className = '', as: Tag = 'div' }) {
   return (
     <Tag
-      className={`rounded-lg border border-mist bg-paper-raised shadow-card ${className}`}
+      className={`rounded-lg border border-dune bg-sandstone-raised shadow-card ${className}`}
     >
       {children}
     </Tag>
@@ -84,10 +84,10 @@ export function Card({ children, className = '', as: Tag = 'div' }) {
  */
 export function Badge({ children, tone = 'neutral', className = '' }) {
   const tones = {
-    neutral: 'border-mist-deep bg-mist/50 text-ink-muted',
+    neutral: 'border-dune-deep bg-dune/50 text-ink-muted',
     pulse: 'border-pulse/25 bg-pulse-wash text-pulse',
     verified: 'border-verified/25 bg-verified-wash text-verified',
-    alert: 'border-alert/25 bg-alert-wash text-alert',
+    alert: 'border-crimson/25 bg-crimson-wash text-crimson',
     draft: 'border-draft/30 bg-draft-wash text-draft-deep',
   }
   return (
@@ -100,14 +100,14 @@ export function Badge({ children, tone = 'neutral', className = '' }) {
 }
 
 export function Divider({ className = '' }) {
-  return <hr className={`border-mist ${className}`} />
+  return <hr className={`border-dune ${className}`} />
 }
 
 export function Stat({ value, label }) {
   return (
     <div>
       <p className="font-display text-3xl text-ink">{value}</p>
-      <p className="mt-1 text-sm leading-snug text-slate">{label}</p>
+      <p className="mt-1 text-sm leading-snug text-umber">{label}</p>
     </div>
   )
 }

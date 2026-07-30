@@ -3,10 +3,11 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Container, Button } from '../ui/primitives.jsx'
 
 export function Logo({ tone = 'dark' }) {
-  const text = tone === 'light' ? 'text-paper' : 'text-ink'
-  const mark = tone === 'light' ? 'text-mist-deep' : 'text-pulse'
+  const text = tone === 'light' ? 'text-sandstone' : 'text-ink'
+  const mark = tone === 'light' ? 'text-dune-deep' : 'text-pulse'
   return (
     <Link to="/" className="group inline-flex items-baseline gap-2">
+      {/* ECG trace — the mark and the `pulse` token share the cardiology motif. */}
       <svg viewBox="0 0 16 16" aria-hidden="true" className={`h-4 w-4 self-center ${mark}`}>
         <path
           d="M1 8h3l1.6-4.4L8.4 13l1.9-5H15"
@@ -18,7 +19,7 @@ export function Logo({ tone = 'dark' }) {
         />
       </svg>
       <span className={`font-display text-[19px] leading-none ${text}`}>
-        Concierge <span className="italic">AI</span> Doctor
+        Auricle<span className="italic text-pulse">Health</span>
       </span>
     </Link>
   )
@@ -37,7 +38,7 @@ export function SiteNav() {
   useEffect(() => setOpen(false), [location.pathname])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-mist bg-paper/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-dune bg-sandstone/85 backdrop-blur-md">
       <Container>
         <div className="flex h-16 items-center justify-between gap-4">
           <Logo />
@@ -91,7 +92,7 @@ export function SiteNav() {
       </Container>
 
       {open && (
-        <div id="mobile-nav" className="border-t border-mist bg-paper md:hidden">
+        <div id="mobile-nav" className="border-t border-dune bg-sandstone md:hidden">
           <Container className="flex flex-col gap-1 py-4">
             {LINKS.map((link) => (
               <NavLink

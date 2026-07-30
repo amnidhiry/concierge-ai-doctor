@@ -42,15 +42,15 @@ export function StepRail({ status }) {
           state === 'active'
             ? 'bg-pulse-wash text-pulse'
             : state === 'done'
-              ? 'text-ink-muted hover:bg-mist/50'
-              : 'text-slate-light'
+              ? 'text-ink-muted hover:bg-dune/50'
+              : 'text-umber-light'
 
         const marker =
           state === 'active'
             ? 'border-pulse bg-pulse text-white'
             : state === 'done'
               ? 'border-verified bg-verified-wash text-verified'
-              : 'border-mist-deep text-slate-light'
+              : 'border-dune-deep text-umber-light'
 
         const inner = (
           <span
@@ -90,7 +90,7 @@ export function StepRail({ status }) {
               <span aria-disabled="true">{inner}</span>
             )}
             {i < STEPS.length - 1 && (
-              <span aria-hidden="true" className="mx-1 hidden h-px w-5 bg-mist-deep sm:block" />
+              <span aria-hidden="true" className="mx-1 hidden h-px w-5 bg-dune-deep sm:block" />
             )}
           </li>
         )

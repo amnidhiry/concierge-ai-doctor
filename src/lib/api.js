@@ -1,20 +1,19 @@
 /**
- * Client wrapper for the synthesis endpoint.
+ * Client wrappers for the two API endpoints.
  *
- * The only network call the app makes. Every failure path resolves to the same
+ * Every failure path resolves to the same
  * `{ ok: false, error: { kind, message, retryAfterSeconds? } }` shape so the UI
- * has exactly one error contract to render — a thrown exception here would be a
- * bug, not a state the caller has to handle separately.
+ * has exactly one error contract to render — a thrown exception from here would
+ * be a bug, not a state the caller has to handle separately.
  */
 
-/** @param {{ patientMessage: string, chartText: string }} intake */
-export async function requestSynthesis({ patientMessage, chartText }, { signal } = {}) {
+async function post(path, payload, { signal } = {}) {
   let response
   try {
-    response = await fetch('/api/synthesize', {
+    response = await fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ patientMessage, chartText }),
+      body: JSON.stringify(payload),
       signal,
     })
   } catch (err) {
@@ -25,36 +24,50 @@ export async function requestSynthesis({ patientMessage, chartText }, { signal }
       ok: false,
       error: {
         kind: 'network',
-        message:
-          'Could not reach the local synthesis endpoint. Is the dev server still running?',
+        message: 'Could not reach the local API. Is the dev server still running?',
       },
     }
   }
 
-  let payload
+  let body
   try {
-    payload = await response.json()
+    body = await response.json()
   } catch {
     return {
       ok: false,
       error: {
         kind: 'malformed_response',
-        message: `The synthesis endpoint returned a non-JSON response (HTTP ${response.status}).`,
+        message: `The endpoint returned a non-JSON response (HTTP ${response.status}).`,
       },
     }
   }
 
-  if (!response.ok || payload?.error) {
-    const error = payload?.error ?? {}
+  if (!response.ok || body?.error) {
+    const error = body?.error ?? {}
     return {
       ok: false,
       error: {
         kind: error.kind || 'unknown',
-        message: error.message || `Synthesis failed (HTTP ${response.status}).`,
+        message: error.message || `Request failed (HTTP ${response.status}).`,
         retryAfterSeconds: error.retryAfterSeconds ?? null,
       },
     }
   }
 
-  return { ok: true, draft: payload.draft, meta: payload.meta }
+  return { ok: true, ...body }
+}
+
+/** Step 1 — one turn of the triage conversation. */
+export function requestTriage({ message, turns }, options) {
+  return post('/api/triage', { message, turns }, options)
+}
+
+/** Clears this client's server-side triage counters. Wired to Reset. */
+export function resetTriage() {
+  return post('/api/triage/reset', {})
+}
+
+/** Step 2 — the second-opinion synthesis. */
+export function requestSynthesis({ patientMessage, chartText }, options) {
+  return post('/api/synthesize', { patientMessage, chartText }, options)
 }

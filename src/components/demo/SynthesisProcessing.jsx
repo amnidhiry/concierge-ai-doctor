@@ -29,7 +29,7 @@ export function SynthesisProcessing({ startedAt }) {
   const slow = elapsed > 20
 
   return (
-    <div className="overflow-hidden rounded-lg border border-draft/30 bg-paper-raised shadow-card">
+    <div className="overflow-hidden rounded-lg border border-draft/30 bg-sandstone-raised shadow-card">
       {/* Indeterminate sweep. A determinate bar would require knowing the
           duration, which we don't. */}
       <div className="relative h-0.5 overflow-hidden bg-draft-wash">
@@ -52,7 +52,7 @@ export function SynthesisProcessing({ startedAt }) {
             >
               {elapsed.toFixed(1)}s elapsed
             </p>
-            <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-slate">
+            <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-umber">
               A live request is in flight to the Anthropic API with your intake and chart text. The
               counter above is real elapsed time on that call — there's no scripted animation
               waiting on pre-written content.
@@ -80,7 +80,7 @@ export function SynthesisProcessing({ startedAt }) {
         </div>
 
         {slow && (
-          <p className="mt-6 rounded-md bg-mist/50 px-4 py-3 text-sm leading-relaxed text-ink-muted">
+          <p className="mt-6 rounded-md bg-dune/50 px-4 py-3 text-sm leading-relaxed text-ink-muted">
             Still working. Long or complex chart material takes longer — the request has not failed.
           </p>
         )}

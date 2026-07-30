@@ -1,9 +1,9 @@
 {
-  "name": "concierge-ai-doctor",
+  "name": "auriclehealth",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Demo-day prototype for Concierge AI Doctor — marketing site plus an end-to-end second-opinion product demo backed by a real Claude API synthesis call.",
+  "description": "Demo-day prototype for AuricleHealth — marketing site plus an end-to-end second-opinion product demo backed by a real Claude API synthesis call.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

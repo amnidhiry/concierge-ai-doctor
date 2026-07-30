@@ -1,22 +1,31 @@
 /**
- * Design system for Concierge AI Doctor.
+ * Design system for AuricleHealth.
  *
- * Palette — cool, low-chroma, institutional. Deliberately avoids the
- * warm-cream/terracotta and dark-mode-plus-neon defaults; this product asks
- * patients and physicians to trust it with serious decisions, so the surface
- * reads closer to a clinical record than to a consumer app.
+ * Palette — sandstone and burnt sienna with red reserved for cardiac signal.
+ * Preventative cardiology is the product, so warmth is doing work here: this is
+ * long-horizon risk-reduction care, not acute intervention, and the surface
+ * should read closer to a considered consultation than to an ER monitor.
  *
- *   ink      #12232B  deep blue-graphite — body text, dark panels
- *   slate    #5B7482  secondary text, metadata
- *   mist     #DEE7EA  dividers, hairlines, inactive fills
- *   paper    #F6F8F9  page background (cool off-white, not cream)
- *   pulse    #14587F  primary action, links
- *   draft    #6D5BA6  reserved: "AI-generated, pending physician review"
- *   verified #2F6B4F  reserved: physician-reviewed / sent
+ *   ink      #2B211B  near-black warm brown — body text, dark panels
+ *   umber    #7A6656  secondary text, metadata
+ *   dune     #E3D7C6  dividers, hairlines, inactive fills
+ *   sandstone#F7F2EA  page background
+ *   pulse    #A54A26  burnt sienna — primary action, links, brand
+ *   crimson  #A0242A  deep red — RESERVED: urgency and cardiac emphasis
+ *   draft    #645A94  RESERVED: "AI-generated, pending physician review"
+ *   verified #4E6B4A  RESERVED: physician-reviewed / sent
  *
- * `draft` and `verified` are state colors, not decoration. Using `draft`
- * anywhere other than an unreviewed-AI-output signal weakens the one visual
- * cue the product most needs to keep honest.
+ * Two reds would compete, so they're split by job: `pulse` (sienna) is every
+ * ordinary action and carries the brand; `crimson` is only ever urgency or
+ * cardiac emphasis. That keeps a red flag meaning something when it appears.
+ *
+ * `draft` stays a cool indigo-violet against the warm neutrals — the contrast
+ * is the point. Machine-generated output should not look like it belongs to the
+ * brand palette, and the coolness reads as provisional next to the sienna.
+ *
+ * Every foreground token clears 4.5:1 against `sandstone` (pulse 5.2, umber
+ * 4.9, crimson 6.8, draft 5.5, verified 5.3), so `pulse` is safe for body links
+ * rather than decoration-only.
  *
  * Type — Newsreader (a restrained low-contrast serif) for display only, IBM
  * Plex Sans for body, IBM Plex Mono for clinical field labels and timestamps.
@@ -27,39 +36,39 @@ export default {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#12232B',
-          soft: '#1D3641',
-          muted: '#2C4B58',
+          DEFAULT: '#2B211B',
+          soft: '#3D2F26',
+          muted: '#544235',
         },
-        slate: {
-          DEFAULT: '#5B7482',
-          light: '#8AA0AB',
+        umber: {
+          DEFAULT: '#7A6656',
+          light: '#A08A76',
         },
-        mist: {
-          DEFAULT: '#DEE7EA',
-          deep: '#C7D5DA',
+        dune: {
+          DEFAULT: '#E3D7C6',
+          deep: '#CFBFA8',
         },
-        paper: {
-          DEFAULT: '#F6F8F9',
-          raised: '#FFFFFF',
+        sandstone: {
+          DEFAULT: '#F7F2EA',
+          raised: '#FFFDF8',
         },
         pulse: {
-          DEFAULT: '#14587F',
-          hover: '#0F4665',
-          wash: '#E7F0F5',
+          DEFAULT: '#A54A26',
+          hover: '#8A3C1E',
+          wash: '#F6E7DE',
+        },
+        crimson: {
+          DEFAULT: '#A0242A',
+          wash: '#F8E6E4',
         },
         draft: {
-          DEFAULT: '#6D5BA6',
-          wash: '#EFEBF7',
-          deep: '#4E3F80',
+          DEFAULT: '#645A94',
+          wash: '#EDEBF5',
+          deep: '#4B4275',
         },
         verified: {
-          DEFAULT: '#2F6B4F',
-          wash: '#E8F1EC',
-        },
-        alert: {
-          DEFAULT: '#9B3B2F',
-          wash: '#F7EAE8',
+          DEFAULT: '#4E6B4A',
+          wash: '#E9F0E6',
         },
       },
       fontFamily: {
@@ -74,13 +83,13 @@ export default {
         prose: '68ch',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(18, 35, 43, 0.04), 0 8px 24px -16px rgba(18, 35, 43, 0.18)',
-        lift: '0 2px 4px rgba(18, 35, 43, 0.05), 0 16px 40px -20px rgba(18, 35, 43, 0.28)',
+        card: '0 1px 2px rgba(43, 33, 27, 0.04), 0 8px 24px -16px rgba(43, 33, 27, 0.20)',
+        lift: '0 2px 4px rgba(43, 33, 27, 0.05), 0 16px 40px -20px rgba(43, 33, 27, 0.30)',
       },
       keyframes: {
-        // Used only by the Step 2 processing state, where motion communicates
-        // that real work is in flight. Both are disabled under
-        // prefers-reduced-motion (see src/index.css).
+        // Used only by the Step 2 processing state and the triage typing
+        // indicator, where motion signals real work in flight. Both are disabled
+        // under prefers-reduced-motion (see src/index.css).
         sweep: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(300%)' },
@@ -89,10 +98,15 @@ export default {
           '0%, 100%': { opacity: '0.45', transform: 'scale(0.94)' },
           '50%': { opacity: '1', transform: 'scale(1)' },
         },
+        solid: {
+          '0%, 80%, 100%': { opacity: '0.3' },
+          '40%': { opacity: '1' },
+        },
       },
       animation: {
         sweep: 'sweep 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite',
         breathe: 'breathe 2.4s ease-in-out infinite',
+        dot: 'solid 1.4s ease-in-out infinite',
       },
     },
   },

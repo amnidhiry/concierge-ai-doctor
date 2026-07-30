@@ -12,8 +12,8 @@ const FITS = [
     body: 'You already translate discharge summaries into plain English for families every day, unpaid. Same work, defined scope, actually compensated.',
   },
   {
-    role: 'Oncologists',
-    body: 'Second-opinion demand in oncology outstrips supply badly, and most of it is a records-review question. Async fits the work better than a clinic slot does.',
+    role: 'Cardiologists',
+    body: 'Prevention is the part of cardiology that never fits the clinic slot — it is a records-and-risk conversation, not a procedure. Async fits the work better than fifteen minutes does.',
   },
 ]
 
@@ -45,14 +45,14 @@ const OBJECTIONS = [
 export function ForPhysicians() {
   return (
     <>
-      <section className="relative overflow-hidden border-b border-mist bg-ink">
+      <section className="relative overflow-hidden border-b border-dune bg-ink">
         <Container className="relative py-16 sm:py-24">
           <div className="max-w-3xl">
             <Eyebrow tone="light">For physicians</Eyebrow>
-            <h1 className="mt-4 text-balance font-display text-4xl leading-[1.08] text-paper sm:text-5xl">
+            <h1 className="mt-4 text-balance font-display text-4xl leading-[1.08] text-sandstone sm:text-5xl">
               Your expertise has a market. Your calendar doesn't have room for it.
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-mist-deep">
+            <p className="mt-6 text-lg leading-relaxed text-dune-deep">
               If you work shifts, you already have the two things an asynchronous panel needs: deep
               specialty judgment, and hours that are unusable for scheduled clinical work. What you
               don't have is a way to charge for the first using the second.
@@ -65,7 +65,7 @@ export function ForPhysicians() {
                 as="link"
                 to="/services"
                 variant="ghost"
-                className="text-mist-deep hover:bg-ink-soft hover:text-paper"
+                className="text-dune-deep hover:bg-ink-soft hover:text-sandstone"
               >
                 Pricing tiers
               </Button>
@@ -97,7 +97,7 @@ export function ForPhysicians() {
         </Container>
       </section>
 
-      <section className="border-y border-mist bg-paper-raised py-20 sm:py-24">
+      <section className="border-y border-dune bg-sandstone-raised py-20 sm:py-24">
         <Container>
           <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
             <Reveal>
@@ -128,7 +128,7 @@ export function ForPhysicians() {
                     <span className="font-mono text-sm text-pulse">{String(i + 1).padStart(2, '0')}</span>
                     <div>
                       <p className="text-[17px] text-ink">{title}</p>
-                      <p className="mt-1.5 text-[15px] leading-relaxed text-slate">{body}</p>
+                      <p className="mt-1.5 text-[15px] leading-relaxed text-umber">{body}</p>
                     </div>
                   </li>
                 ))}
@@ -144,7 +144,7 @@ export function ForPhysicians() {
                   ))}
                 </div>
                 <div className="hairline mt-7 pt-6">
-                  <p className="text-sm leading-relaxed text-slate">
+                  <p className="text-sm leading-relaxed text-umber">
                     Figures are the target operating model for this prototype, not measured
                     results. Panel size and per-case time are the two numbers a pilot needs to
                     validate first.
@@ -168,9 +168,9 @@ export function ForPhysicians() {
           <div className="mt-12 max-w-prose space-y-0">
             {OBJECTIONS.map((item, i) => (
               <Reveal key={item.q} delay={i * 70}>
-                <div className="border-t border-mist py-7">
+                <div className="border-t border-dune py-7">
                   <h3 className="text-xl leading-snug text-ink">{item.q}</h3>
-                  <p className="mt-3 text-[15px] leading-relaxed text-slate">{item.a}</p>
+                  <p className="mt-3 text-[15px] leading-relaxed text-umber">{item.a}</p>
                 </div>
               </Reveal>
             ))}
@@ -187,11 +187,11 @@ export function ForPhysicians() {
       <section className="pb-8">
         <Container>
           <Reveal>
-            <div className="rounded-xl border border-mist bg-paper-raised px-6 py-12 text-center sm:px-12">
+            <div className="rounded-xl border border-dune bg-sandstone-raised px-6 py-12 text-center sm:px-12">
               <h2 className="mx-auto max-w-xl text-balance font-display text-3xl leading-tight text-ink">
                 The fastest way to judge this is to review a case yourself.
               </h2>
-              <p className="mx-auto mt-4 max-w-lg text-[17px] leading-relaxed text-slate">
+              <p className="mx-auto mt-4 max-w-lg text-[17px] leading-relaxed text-umber">
                 Paste in a synthetic case, let the model draft it, then sit in the physician's seat
                 and decide whether the draft saved you time or wasted it.
               </p>

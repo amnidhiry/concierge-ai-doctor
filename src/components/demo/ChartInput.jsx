@@ -75,11 +75,11 @@ export function ChartInput({ value, onChange, fileName, onFileName, disabled }) 
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-mist bg-paper">
-      <div className="flex items-center justify-between gap-3 border-b border-mist bg-paper-raised px-4 py-3">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-dune bg-sandstone">
+      <div className="flex items-center justify-between gap-3 border-b border-dune bg-sandstone-raised px-4 py-3">
         <div>
           <p className="text-[15px] font-medium text-ink">Records & case summary</p>
-          <p className="mt-0.5 text-xs text-slate">Paste or upload — optional, but it's what the synthesis reads</p>
+          <p className="mt-0.5 text-xs text-umber">Paste or upload — optional, but it's what the synthesis reads</p>
         </div>
         <Badge tone="neutral">Chart</Badge>
       </div>
@@ -97,11 +97,11 @@ export function ChartInput({ value, onChange, fileName, onFileName, disabled }) 
             if (!disabled) ingest(e.dataTransfer.files?.[0])
           }}
           className={`rounded-md border border-dashed px-4 py-3 transition-colors ${
-            dragging ? 'border-pulse bg-pulse-wash' : 'border-mist-deep bg-mist/25'
+            dragging ? 'border-pulse bg-pulse-wash' : 'border-dune-deep bg-dune/25'
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-slate">
+            <p className="text-sm text-umber">
               {fileName ? (
                 <>
                   Loaded <span className="font-mono text-[13px] text-ink">{fileName}</span>
@@ -132,7 +132,7 @@ export function ChartInput({ value, onChange, fileName, onFileName, disabled }) 
         </div>
 
         {fileError && (
-          <p role="alert" className="rounded-md bg-alert-wash px-3.5 py-2.5 text-sm leading-relaxed text-alert">
+          <p role="alert" className="rounded-md bg-crimson-wash px-3.5 py-2.5 text-sm leading-relaxed text-crimson">
             {fileError}
           </p>
         )}
@@ -146,12 +146,12 @@ export function ChartInput({ value, onChange, fileName, onFileName, disabled }) 
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           placeholder={
-            'Paste the chart summary, pathology report, discharge summary, or case notes here…\n\nSynthetic data only.'
+            'Paste the lipid panel, calcium score report, discharge summary, or case notes here…\n\nSynthetic data only.'
           }
-          className="min-h-[220px] flex-1 resize-y rounded-md border border-mist-deep bg-paper px-3.5 py-3 font-mono text-[13px] leading-relaxed text-ink placeholder:font-sans placeholder:text-[14px] placeholder:text-slate-light focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse disabled:opacity-50"
+          className="min-h-[220px] flex-1 resize-y rounded-md border border-dune-deep bg-sandstone px-3.5 py-3 font-mono text-[13px] leading-relaxed text-ink placeholder:font-sans placeholder:text-[14px] placeholder:text-umber-light focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse disabled:opacity-50"
         />
 
-        <p className="text-xs leading-relaxed text-slate">
+        <p className="text-xs leading-relaxed text-umber">
           {value.length.toLocaleString()} characters. This text is sent to the Anthropic API for
           synthesis — use synthetic case data only, never real patient information.
         </p>

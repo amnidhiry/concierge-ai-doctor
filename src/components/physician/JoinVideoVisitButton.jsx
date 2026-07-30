@@ -50,18 +50,18 @@ export function JoinVideoVisitButton({ patientName, variant = 'outline', classNa
             role="dialog"
             aria-modal="true"
             aria-labelledby="video-visit-title"
-            className="w-full max-w-md rounded-lg border border-mist bg-paper-raised p-6 shadow-lift"
+            className="w-full max-w-md rounded-lg border border-dune bg-sandstone-raised p-6 shadow-lift"
           >
             <p className="field-label">Placeholder</p>
             <h2 id="video-visit-title" className="mt-3 font-display text-2xl leading-tight text-ink">
               Video visit would start here
             </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-slate">
+            <p className="mt-3 text-[15px] leading-relaxed text-umber">
               This build has no video implementation. In production this opens a LiveKit room with
               {patientName ? ` ${patientName}` : ' the patient'}, gated on the physician's device
               permissions.
             </p>
-            <p className="mt-3 text-sm leading-relaxed text-slate">
+            <p className="mt-3 text-sm leading-relaxed text-umber">
               Kept as its own isolated component so real video logic can drop in without touching
               the rest of the dashboard.
             </p>

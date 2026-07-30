@@ -19,13 +19,13 @@ export function DemoLayout() {
   }, [pathname])
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper">
-      <header className="sticky top-0 z-40 border-b border-mist bg-paper/90 backdrop-blur-md">
+    <div className="flex min-h-screen flex-col bg-sandstone">
+      <header className="sticky top-0 z-40 border-b border-dune bg-sandstone/90 backdrop-blur-md">
         <Container width="wide">
           <div className="flex h-16 items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Logo />
-              <span className="hidden font-mono text-[10px] uppercase tracking-label text-slate sm:inline">
+              <span className="hidden font-mono text-[10px] uppercase tracking-label text-umber sm:inline">
                 Demo
               </span>
             </div>
@@ -48,7 +48,7 @@ export function DemoLayout() {
             </div>
           </div>
         </Container>
-        <div className="border-t border-mist bg-paper-raised">
+        <div className="border-t border-dune bg-sandstone-raised">
           <Container width="wide" className="py-2.5">
             <StepRail status={liveCase.status} />
           </Container>
@@ -59,9 +59,9 @@ export function DemoLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-mist bg-paper-raised">
+      <footer className="border-t border-dune bg-sandstone-raised">
         <Container width="wide" className="py-6">
-          <p className="max-w-3xl text-xs leading-relaxed text-slate">
+          <p className="max-w-3xl text-xs leading-relaxed text-umber">
             <strong className="font-medium text-ink-muted">Prototype.</strong> Step 2 makes a real
             Anthropic API call; the physician panel below the live case is static sample data, and
             the video button is a placeholder. Nothing here is medical advice, and no data persists

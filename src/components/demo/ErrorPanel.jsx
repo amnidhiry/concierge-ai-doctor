@@ -61,22 +61,22 @@ export function ErrorPanel({ error, onRetry, onStartOver }) {
   const guide = GUIDANCE[error?.kind] ?? GUIDANCE.unknown
 
   return (
-    <div role="alert" className="overflow-hidden rounded-lg border border-alert/30 bg-paper-raised shadow-card">
-      <div className="h-0.5 bg-alert" />
+    <div role="alert" className="overflow-hidden rounded-lg border border-crimson/30 bg-sandstone-raised shadow-card">
+      <div className="h-0.5 bg-crimson" />
       <div className="p-6 sm:p-8">
-        <p className="field-label text-alert">Step 2 failed</p>
+        <p className="field-label text-crimson">Step 2 failed</p>
         <h2 className="mt-3 font-display text-2xl leading-tight text-ink">{guide.title}</h2>
 
         {error?.message && (
-          <p className="mt-4 rounded-md bg-alert-wash px-4 py-3 font-mono text-[13px] leading-relaxed text-alert">
+          <p className="mt-4 rounded-md bg-crimson-wash px-4 py-3 font-mono text-[13px] leading-relaxed text-crimson">
             {error.message}
           </p>
         )}
 
-        <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-slate">{guide.hint}</p>
+        <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-umber">{guide.hint}</p>
 
         {error?.retryAfterSeconds ? (
-          <p className="mt-2 font-mono text-[13px] text-slate">
+          <p className="mt-2 font-mono text-[13px] text-umber">
             Suggested wait: {error.retryAfterSeconds}s
           </p>
         ) : null}

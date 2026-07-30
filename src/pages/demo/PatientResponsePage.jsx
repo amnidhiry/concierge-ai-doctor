@@ -38,11 +38,11 @@ export function PatientResponsePage() {
 
       <div className="mt-8 max-w-3xl space-y-6">
         <Card className="overflow-hidden">
-          <div className="border-b border-mist bg-verified-wash/60 px-5 py-4 sm:px-6">
+          <div className="border-b border-dune bg-verified-wash/60 px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[15px] font-medium text-ink">{physician.name}</p>
-                <p className="mt-0.5 font-mono text-[11px] text-slate">
+                <p className="mt-0.5 font-mono text-[11px] text-umber">
                   {physician.credential}
                   {liveCase.sentAt && ` · ${new Date(liveCase.sentAt).toLocaleString()}`}
                 </p>
@@ -57,9 +57,9 @@ export function PatientResponsePage() {
             </p>
           </div>
 
-          <div className="border-t border-mist bg-mist/20 px-5 py-4 sm:px-6">
+          <div className="border-t border-dune bg-dune/20 px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-md text-[13px] leading-relaxed text-slate">
+              <p className="max-w-md text-[13px] leading-relaxed text-umber">
                 Have a follow-up question? It's included in your plan. For anything urgent, seek
                 in-person care.
               </p>
@@ -92,7 +92,7 @@ export function PatientResponsePage() {
           </ol>
 
           {wasEdited && (
-            <details className="mt-5 border-t border-mist pt-4">
+            <details className="mt-5 border-t border-dune pt-4">
               <summary className="cursor-pointer text-[13px] font-medium text-pulse">
                 Compare with the original AI draft
               </summary>
@@ -102,7 +102,7 @@ export function PatientResponsePage() {
                   {aiDraft}
                 </p>
               </div>
-              <p className="mt-3 text-[13px] leading-relaxed text-slate">
+              <p className="mt-3 text-[13px] leading-relaxed text-umber">
                 Shown here for demo transparency. A patient would not normally see the unreviewed
                 draft.
               </p>

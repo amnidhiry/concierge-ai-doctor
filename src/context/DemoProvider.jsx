@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { LIVE_PATIENT, REVIEWING_PHYSICIAN } from '../domain/mockPanel.js'
 import { makeCase, makeIntake, normalizeDraft } from '../domain/models.js'
-import { requestSynthesis } from '../lib/api.js'
+import { requestSynthesis, resetTriage } from '../lib/api.js'
 
 /**
  * Single source of truth for the Step 1–4 flow.
@@ -101,6 +101,11 @@ export function DemoProvider({ children }) {
   const resetDemo = useCallback(() => {
     inFlight.current = false
     setLiveCase(initialCase())
+    // Also clear the server-side triage counters. The guard messages tell the
+    // user to "reset the demo to start over", so Reset has to actually clear the
+    // off-topic strikes and rate-limit window — otherwise that instruction is a
+    // dead end. Fire-and-forget: a failed reset shouldn't block the UI.
+    resetTriage().catch(() => {})
   }, [])
 
   const value = useMemo(

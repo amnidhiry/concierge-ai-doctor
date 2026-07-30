@@ -6,7 +6,7 @@ const STEPS = [
   {
     n: '01',
     title: 'Patient submits, in their own words',
-    body: 'A short conversational intake plus whatever records they already have — a pathology report, a discharge summary, a wall of text from a portal. No forms to decode.',
+    body: 'A short conversational intake plus whatever records they already have — a lipid panel, a calcium score report, a wall of text from a portal. No forms to decode.',
   },
   {
     n: '02',
@@ -26,19 +26,37 @@ const STEPS = [
 ]
 
 const SPECIALTIES = [
-  { name: 'Medical oncology', note: 'Treatment sequencing, second opinions, surveillance intervals' },
-  { name: 'Hematology', note: 'Indeterminate counts, anticoagulation questions' },
-  { name: 'Emergency medicine', note: 'Post-discharge follow-up, "was that ER visit handled right?"' },
-  { name: 'Hospital medicine', note: 'Discharge summary translation, medication reconciliation' },
-  { name: 'Endocrinology', note: 'Nodule workups, incidental findings' },
-  { name: 'Cardiology', note: 'Imaging interpretation, risk-factor planning' },
+  {
+    name: 'Lipids & Lp(a)',
+    note: 'ApoB, Lp(a), discordant panels, statin decisions and intolerance',
+  },
+  {
+    name: 'Coronary calcium',
+    note: 'CAC scores, percentile context, what a zero score does and does not rule out',
+  },
+  {
+    name: 'Premature family history',
+    note: 'A parent or sibling with an early event, and what to actually test',
+  },
+  {
+    name: 'Blood pressure',
+    note: 'Home-reading interpretation, resistant hypertension, post-pre-eclampsia risk',
+  },
+  {
+    name: 'Metabolic risk',
+    note: 'Insulin resistance, A1c trends, visceral adiposity, lipid interaction',
+  },
+  {
+    name: 'Secondary prevention',
+    note: 'Post-MI or post-stent targets, when to intensify therapy',
+  },
 ]
 
 function HeroPreview() {
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-mist bg-mist/30 px-4 py-3">
-        <p className="field-label">Physician queue · case pt-2284</p>
+      <div className="flex items-center justify-between gap-3 border-b border-dune bg-dune/30 px-4 py-3">
+        <p className="field-label">Cardiology queue · case pt-2284</p>
         <Badge tone="pulse">Waiting 41m</Badge>
       </div>
       <div className="space-y-4 p-5">
@@ -46,8 +64,8 @@ function HeroPreview() {
         <div>
           <p className="field-label">One-line summary</p>
           <p className="mt-2 text-[15px] leading-relaxed text-ink">
-            64M on active surveillance for low-risk prostate cancer, asking whether a rising PSA
-            should move him to treatment.
+            61M with a coronary calcium score of 240, reluctant to start a statin and asking what
+            the number actually means for him.
           </p>
         </div>
         <div className="hairline pt-4">
@@ -55,11 +73,11 @@ function HeroPreview() {
           <ul className="mt-2 space-y-2 text-[15px] leading-relaxed text-ink-muted">
             <li className="flex gap-2.5">
               <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-draft" />
-              Confirm the PSA velocity — only two values are in the record.
+              Confirm the age/sex percentile — the report gives an absolute score only.
             </li>
             <li className="flex gap-2.5">
               <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-draft" />
-              Has repeat imaging or biopsy been done since the 2024 result?
+              No ApoB or Lp(a) in the record. Worth having before the statin conversation?
             </li>
           </ul>
         </div>
@@ -72,7 +90,7 @@ export function Landing() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-mist">
+      <section className="relative overflow-hidden border-b border-dune">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-pulse-wash/70 to-transparent"
@@ -80,13 +98,13 @@ export function Landing() {
         <Container className="relative py-16 sm:py-24">
           <div className="grid items-start gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
             <div>
-              <Eyebrow tone="pulse">Asynchronous physician panels</Eyebrow>
+              <Eyebrow tone="pulse">Asynchronous preventative cardiology</Eyebrow>
               <h1 className="mt-4 text-balance font-display text-4xl leading-[1.08] text-ink sm:text-5xl lg:text-[3.5rem]">
                 The specialist read your chart. Not a portal message telling you to book an
                 appointment.
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate">
-                Concierge AI Doctor lets shift-based physicians run small cash-pay panels between
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-umber">
+                AuricleHealth lets shift-based physicians run small cash-pay panels between
                 shifts. AI handles triage, chart synthesis, and documentation. The physician handles
                 judgment — and signs every response.
               </p>
@@ -100,7 +118,7 @@ export function Landing() {
                 </Button>
               </div>
 
-              <div className="mt-12 grid grid-cols-3 gap-6 border-t border-mist pt-8">
+              <div className="mt-12 grid grid-cols-3 gap-6 border-t border-dune pt-8">
                 <Stat value="6–8" label="Patients on a typical starting panel" />
                 <Stat value="<48h" label="Target turnaround, asynchronous" />
                 <Stat value="100%" label="Responses physician-reviewed before send" />
@@ -121,7 +139,7 @@ export function Landing() {
             <SectionHeading
               eyebrow="The problem"
               title="Serious health decisions get made in fifteen-minute slots, weeks apart."
-              lede="A patient facing a treatment decision has questions that don't fit an appointment, and a physician with the expertise to answer them has no billable way to do it. The gap isn't clinical knowledge. It's the format."
+              lede="A patient handed a risk number has questions that don't fit an appointment, and a physician with the expertise to answer them has no billable way to do it. The gap isn't clinical knowledge. It's the format."
             />
           </Reveal>
 
@@ -129,7 +147,7 @@ export function Landing() {
             {[
               {
                 title: 'Async is the right shape',
-                body: 'A thoughtful written answer to "should I get a second opinion on this pathology report" is worth more than a rushed visit — and it can be written at 10pm between shifts.',
+                body: 'A thoughtful written answer to "does this calcium score mean I have to take a statin" is worth more than a rushed visit — and it can be written at 10pm between shifts.',
               },
               {
                 title: 'AI does the assembly, not the judgment',
@@ -143,7 +161,7 @@ export function Landing() {
               <Reveal key={item.title} delay={i * 90}>
                 <Card className="h-full p-6">
                   <h3 className="text-xl leading-snug text-ink">{item.title}</h3>
-                  <p className="mt-3 text-[15px] leading-relaxed text-slate">{item.body}</p>
+                  <p className="mt-3 text-[15px] leading-relaxed text-umber">{item.body}</p>
                 </Card>
               </Reveal>
             ))}
@@ -152,7 +170,7 @@ export function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="border-y border-mist bg-paper-raised py-20 sm:py-24">
+      <section className="border-y border-dune bg-sandstone-raised py-20 sm:py-24">
         <Container>
           <Reveal>
             <SectionHeading eyebrow="How it works" title="Four steps, one of them human." />
@@ -163,9 +181,9 @@ export function Landing() {
               <Reveal key={step.n} delay={i * 80}>
                 <div className="flex gap-5">
                   <p className="font-mono text-sm text-pulse">{step.n}</p>
-                  <div className="border-l border-mist pl-5">
+                  <div className="border-l border-dune pl-5">
                     <h3 className="text-xl leading-snug text-ink">{step.title}</h3>
-                    <p className="mt-2.5 text-[15px] leading-relaxed text-slate">{step.body}</p>
+                    <p className="mt-2.5 text-[15px] leading-relaxed text-umber">{step.body}</p>
                   </div>
                 </div>
               </Reveal>
@@ -201,9 +219,9 @@ export function Landing() {
           <div className="mt-12 grid gap-x-10 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
             {SPECIALTIES.map((s, i) => (
               <Reveal key={s.name} delay={i * 60}>
-                <div className="border-t border-mist py-5">
+                <div className="border-t border-dune py-5">
                   <p className="text-[17px] text-ink">{s.name}</p>
-                  <p className="mt-1.5 text-sm leading-relaxed text-slate">{s.note}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-umber">{s.note}</p>
                 </div>
               </Reveal>
             ))}
@@ -218,10 +236,10 @@ export function Landing() {
             <div className="rounded-xl bg-ink px-6 py-14 sm:px-12 sm:py-16">
               <div className="max-w-2xl">
                 <Eyebrow tone="light">See it work</Eyebrow>
-                <h2 className="mt-3 text-balance font-display text-3xl leading-tight text-paper sm:text-4xl">
+                <h2 className="mt-3 text-balance font-display text-3xl leading-tight text-sandstone sm:text-4xl">
                   Paste in a case and watch it move through the whole pipeline.
                 </h2>
-                <p className="mt-4 text-[17px] leading-relaxed text-mist-deep">
+                <p className="mt-4 text-[17px] leading-relaxed text-dune-deep">
                   The demo runs a live synthesis call on whatever case material you provide — intake
                   to physician-reviewed reply. Use synthetic data only.
                 </p>

@@ -43,15 +43,15 @@ export function PhysicianPage() {
           <h1 className="mt-3 font-display text-3xl leading-tight text-ink sm:text-4xl">
             Review queue
           </h1>
-          <p className="mt-3 text-[17px] leading-relaxed text-slate">
+          <p className="mt-3 text-[17px] leading-relaxed text-umber">
             The physician's side. Correct the draft, rewrite the reply in your own voice, and send —
             nothing leaves this screen unreviewed.
           </p>
         </div>
-        <div className="rounded-md border border-mist bg-paper-raised px-4 py-3">
+        <div className="rounded-md border border-dune bg-sandstone-raised px-4 py-3">
           <p className="field-label">Signed in as</p>
           <p className="mt-1.5 text-[15px] font-medium text-ink">{physician.name}</p>
-          <p className="font-mono text-[11px] text-slate">
+          <p className="font-mono text-[11px] text-umber">
             {physician.credential} · {physician.npiLabel}
           </p>
         </div>
@@ -69,7 +69,7 @@ export function PhysicianPage() {
               <div>
                 <p className="field-label">Case {liveCase.id}</p>
                 <p className="mt-1.5 font-display text-xl text-ink">{liveCase.patient.name}</p>
-                <p className="mt-1 text-sm text-slate">
+                <p className="mt-1 text-sm text-umber">
                   {liveCase.patient.plan}
                   {liveCase.intake.submittedAt &&
                     ` · submitted ${new Date(liveCase.intake.submittedAt).toLocaleTimeString()}`}
@@ -82,7 +82,7 @@ export function PhysicianPage() {
           {!hasIntake && (
             <Card className="p-8 text-center">
               <p className="font-display text-xl text-ink">No case submitted yet</p>
-              <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate">
+              <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-umber">
                 Submit a case in Step 1 and the physician queue will populate with real model output.
               </p>
               <Button as="link" to="/demo" variant="primary" className="mt-6">
@@ -104,7 +104,7 @@ export function PhysicianPage() {
               {/* What the patient actually submitted, so the physician can check
                   the draft against the source rather than trusting it. */}
               <Card className="overflow-hidden">
-                <div className="border-b border-mist bg-mist/25 px-5 py-3.5">
+                <div className="border-b border-dune bg-dune/25 px-5 py-3.5">
                   <p className="field-label">Patient's submission</p>
                 </div>
                 <div className="space-y-4 px-5 py-4">
@@ -123,7 +123,7 @@ export function PhysicianPage() {
                         {liveCase.intake.chartFileName && ` · ${liveCase.intake.chartFileName}`} (
                         {liveCase.intake.chartText.length.toLocaleString()} chars)
                       </summary>
-                      <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-mist/30 p-4 font-mono text-[12px] leading-relaxed text-ink-muted">
+                      <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-dune/30 p-4 font-mono text-[12px] leading-relaxed text-ink-muted">
                         {liveCase.intake.chartText}
                       </pre>
                     </details>

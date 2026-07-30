@@ -13,7 +13,7 @@
   }
 
   body {
-    @apply bg-paper font-sans text-ink antialiased;
+    @apply bg-sandstone font-sans text-ink antialiased;
     text-rendering: optimizeLegibility;
   }
 
@@ -26,7 +26,7 @@
 
   /* Keyboard focus is visible everywhere; mouse clicks don't get a ring. */
   :focus-visible {
-    @apply outline-none ring-2 ring-pulse ring-offset-2 ring-offset-paper;
+    @apply outline-none ring-2 ring-pulse ring-offset-2 ring-offset-sandstone;
   }
 
   textarea,
@@ -40,11 +40,11 @@
   /* Small monospace field label. Used for clinical metadata — the kind of
      label you'd see on a chart field rather than in marketing copy. */
   .field-label {
-    @apply font-mono text-[11px] uppercase tracking-label text-slate;
+    @apply font-mono text-[11px] uppercase tracking-label text-umber;
   }
 
   .hairline {
-    @apply border-t border-mist;
+    @apply border-t border-dune;
   }
 }
 

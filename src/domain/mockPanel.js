@@ -4,78 +4,87 @@
  * These are scenery: they give the dashboard the density of a real panel so the
  * one live case doesn't sit alone on an empty screen. Only the live case
  * (Steps 1–4) carries real model output. Every name and detail here is invented.
+ *
+ * Cases are drawn from preventative cardiology — risk stratification, lipid and
+ * Lp(a) questions, calcium scores, family history — rather than acute cardiology.
+ * The product is asynchronous, so anything acute belongs in an emergency
+ * department, and the panel should reflect that.
  */
 
 export const MOCK_PANEL = [
   {
     id: 'pt-2291',
     name: 'D. Okafor',
-    age: 58,
+    age: 52,
     sex: 'F',
-    condition: 'Stage II breast cancer — adjuvant planning',
+    condition: 'Elevated Lp(a) — risk stratification',
     plan: 'Second Opinion',
     status: 'sent',
     waitingLabel: 'Answered 2h ago',
-    summary: 'Second opinion on adjuvant chemo vs endocrine-only after oncotype result.',
+    summary:
+      'Lp(a) 187 nmol/L found incidentally. Asking what it changes given an otherwise clean lipid panel.',
   },
   {
     id: 'pt-2284',
     name: 'R. Villanueva',
-    age: 64,
+    age: 61,
     sex: 'M',
-    condition: 'Prostate cancer — surveillance vs treatment',
+    condition: 'CAC score 240 — statin decision',
     plan: 'Async AI Concierge',
     status: 'awaiting_review',
     waitingLabel: 'Waiting 41m',
-    summary: 'Rising PSA on active surveillance; asking whether to move to treatment.',
+    summary:
+      'Calcium score came back at 240 (78th percentile). Reluctant to start a statin, wants the reasoning.',
   },
   {
     id: 'pt-2277',
     name: 'K. Bergström',
-    age: 47,
+    age: 44,
     sex: 'F',
-    condition: 'Thyroid nodule — indeterminate cytology',
+    condition: 'Premature family history — first workup',
     plan: 'Navigation',
     status: 'awaiting_review',
     waitingLabel: 'Waiting 3h',
-    summary: 'Bethesda III result; wants help deciding between molecular testing and repeat FNA.',
+    summary:
+      'Father had an MI at 49. No personal risk factors. Asking which tests are actually worth doing.',
   },
   {
     id: 'pt-2265',
     name: 'A. Haddad',
-    age: 71,
+    age: 67,
     sex: 'M',
-    condition: 'Colorectal cancer — post-op surveillance',
+    condition: 'Post-stent secondary prevention',
     plan: 'Async AI Concierge',
     status: 'sent',
     waitingLabel: 'Answered yesterday',
-    summary: 'Question about CEA trend and surveillance imaging interval.',
+    summary:
+      'Two years post-PCI. LDL 78 on moderate-intensity statin; asking whether to intensify.',
   },
   {
     id: 'pt-2258',
     name: 'J. Whitfield',
-    age: 39,
+    age: 38,
     sex: 'F',
-    condition: 'Lymphoma — treatment sequencing',
+    condition: 'Hypertension in pregnancy — follow-up',
     plan: 'Second Opinion',
     status: 'intake',
     waitingLabel: 'Intake incomplete',
-    summary: 'Started intake, has not yet uploaded outside records.',
+    summary: 'History of pre-eclampsia, wants long-term cardiovascular risk plan. Records not yet uploaded.',
   },
   {
     id: 'pt-2249',
     name: 'M. Petrov',
     age: 55,
     sex: 'M',
-    condition: 'Melanoma — sentinel node discussion',
+    condition: 'Statin intolerance — alternatives',
     plan: 'Navigation',
     status: 'sent',
     waitingLabel: 'Answered 3d ago',
-    summary: 'Wanted a plain-language read on the pathology report before surgical consult.',
+    summary: 'Myalgia on two statins. Wants a plain-language read on what else exists.',
   },
 ]
 
-/** The synthetic identity attached to whatever case the reviewer pastes in. */
+/** The synthetic identity attached to whatever case the reviewer submits. */
 export const LIVE_PATIENT = {
   id: 'pt-2302',
   name: 'New case (this session)',
@@ -87,6 +96,6 @@ export const LIVE_PATIENT = {
 
 export const REVIEWING_PHYSICIAN = {
   name: 'Dr. Imani Reyes',
-  credential: 'MD, Medical Oncology',
+  credential: 'MD, Preventative Cardiology',
   npiLabel: 'NPI ····4417',
 }

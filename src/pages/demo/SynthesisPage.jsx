@@ -37,7 +37,7 @@ export function SynthesisPage() {
               ? 'Synthesis did not complete'
               : 'Draft assembled'}
         </h1>
-        <p className="mt-4 text-[17px] leading-relaxed text-slate">
+        <p className="mt-4 text-[17px] leading-relaxed text-umber">
           {liveCase.status === 'awaiting_review'
             ? 'This is the model\'s actual output for the case you submitted. Next it goes to the physician queue, where it can be corrected before anything reaches the patient.'
             : 'The synthesis call runs against the Anthropic API with your intake and chart text.'}
@@ -57,10 +57,10 @@ export function SynthesisPage() {
           <>
             <DraftDocument draft={liveCase.draft} meta={liveCase.synthesisMeta} />
 
-            <div className="mt-6 flex flex-col gap-4 rounded-lg border border-mist bg-paper-raised p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 flex flex-col gap-4 rounded-lg border border-dune bg-sandstone-raised p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[15px] font-medium text-ink">Nothing has been sent yet</p>
-                <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate">
+                <p className="mt-1 max-w-xl text-sm leading-relaxed text-umber">
                   The patient cannot see any of this. It sits in the physician's queue until a
                   clinician reviews, edits, and sends it.
                 </p>

@@ -11,7 +11,7 @@ const TIERS = [
     forWho: 'A patient holding a report they can\'t read, or facing one decision.',
     includes: [
       'One asynchronous question, one physician-reviewed answer',
-      'Plain-language translation of a pathology, imaging, or lab report',
+      'Plain-language translation of a lipid panel, calcium score, or imaging report',
       'Guidance on what to ask at the next appointment',
       'Referral direction — who to see, and how urgently',
     ],
@@ -27,7 +27,7 @@ const TIERS = [
     forWho:
       'A patient in an active treatment decision who wants a second set of eyes before committing.',
     includes: [
-      'Full review of submitted records by a specialist in the relevant field',
+      'Full review of submitted records by a preventative cardiologist',
       'Structured written assessment: considerations, open questions, next steps',
       'Follow-up exchanges through the month as the situation develops',
       'One optional video visit',
@@ -69,12 +69,12 @@ function TierCard({ tier }) {
 
       <div className="mt-5 flex items-baseline gap-2">
         <p className="font-display text-3xl text-ink">{tier.price}</p>
-        <p className="font-mono text-xs uppercase tracking-label text-slate">{tier.unit}</p>
+        <p className="font-mono text-xs uppercase tracking-label text-umber">{tier.unit}</p>
       </div>
 
-      <p className="mt-4 text-[15px] leading-relaxed text-slate">{tier.summary}</p>
+      <p className="mt-4 text-[15px] leading-relaxed text-umber">{tier.summary}</p>
 
-      <div className="mt-5 rounded-md bg-mist/40 px-4 py-3">
+      <div className="mt-5 rounded-md bg-dune/40 px-4 py-3">
         <p className="field-label">Best for</p>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{tier.forWho}</p>
       </div>
@@ -106,8 +106,8 @@ function TierCard({ tier }) {
         <p className="field-label mt-6">Not included</p>
         <ul className="mt-3 space-y-2">
           {tier.excludes.map((item) => (
-            <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-slate">
-              <span className="mt-2.5 h-px w-3 shrink-0 bg-mist-deep" />
+            <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-umber">
+              <span className="mt-2.5 h-px w-3 shrink-0 bg-dune-deep" />
               <span>{item}</span>
             </li>
           ))}
@@ -129,7 +129,7 @@ function TierCard({ tier }) {
 export function Services() {
   return (
     <>
-      <section className="border-b border-mist bg-paper-raised py-16 sm:py-20">
+      <section className="border-b border-dune bg-sandstone-raised py-16 sm:py-20">
         <Container>
           <Reveal>
             <div className="max-w-3xl">
@@ -137,7 +137,7 @@ export function Services() {
               <h1 className="mt-4 text-balance font-display text-4xl leading-[1.1] text-ink sm:text-5xl">
                 Three tiers, priced so the physician can afford to think.
               </h1>
-              <p className="mt-6 text-lg leading-relaxed text-slate">
+              <p className="mt-6 text-lg leading-relaxed text-umber">
                 Cash-pay, no insurance, no prior authorization. Each tier defines a scope the
                 physician can actually deliver between shifts — which is why the answers are worth
                 paying for.
@@ -158,19 +158,19 @@ export function Services() {
           </div>
 
           <Reveal delay={120}>
-            <div className="mt-14 grid gap-8 rounded-lg border border-mist bg-paper-raised p-6 sm:grid-cols-2 sm:p-8">
+            <div className="mt-14 grid gap-8 rounded-lg border border-dune bg-sandstone-raised p-6 sm:grid-cols-2 sm:p-8">
               <div>
                 <SectionHeading
                   eyebrow="What every tier shares"
                   title="A physician signs off. Always."
                 />
-                <p className="mt-4 text-[15px] leading-relaxed text-slate">
+                <p className="mt-4 text-[15px] leading-relaxed text-umber">
                   AI drafts; a licensed physician reviews, edits, and takes responsibility. There is
                   no tier where an unreviewed model response reaches a patient — that isn't a
                   feature difference, it's the floor.
                 </p>
               </div>
-              <div className="space-y-4 sm:border-l sm:border-mist sm:pl-8">
+              <div className="space-y-4 sm:border-l sm:border-dune sm:pl-8">
                 {[
                   ['Scope is explicit', 'Each tier says what it does not cover, in writing.'],
                   [
@@ -184,7 +184,7 @@ export function Services() {
                 ].map(([title, body]) => (
                   <div key={title}>
                     <p className="text-[15px] font-medium text-ink">{title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate">{body}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-umber">{body}</p>
                   </div>
                 ))}
               </div>

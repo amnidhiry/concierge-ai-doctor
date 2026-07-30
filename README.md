@@ -1,4 +1,4 @@
-# Concierge AI Doctor — demo-day prototype
+# AuricleHealth — demo-day prototype
 
 A marketing site plus an interactive product demo for a platform that lets shift-based physicians run small cash-pay patient panels asynchronously, with AI handling triage, chart synthesis, and documentation.
 
@@ -26,7 +26,7 @@ Two things worth knowing:
 
 - **A shell-exported key is also picked up.** Vite's `loadEnv(mode, cwd, '')` merges matching `process.env` entries, so if you already have `ANTHROPIC_API_KEY` exported the app works with no `.env` file at all. Convenient, but with two keys around you can bill an org you didn't intend to — so the dev server prints which source it used at startup:
   ```
-  [concierge] API key loaded from: .env
+  [auricle] API key loaded from: .env
   ```
   `.env` takes precedence over the shell.
 - **Without a key, Step 2 fails cleanly** with an in-UI "API key not configured" state and setup instructions. The rest of the app works.
