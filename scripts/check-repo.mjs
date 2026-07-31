@@ -69,7 +69,20 @@ const SECRET_NAMES = [
 ]
 
 /** Files permitted to read credentials from the environment. */
-const SERVER_SIDE = ['vite.config.js', 'server/devApi.js', 'server/livekitToken.js']
+/**
+ * Files permitted to READ credentials.
+ *
+ * `server/` is allowed as a prefix rather than file-by-file. Everything under it
+ * runs in Node — the Vite plugin at dev time, prod.js in the container — and none
+ * of it is reachable from the client bundle, which is the boundary this rule
+ * actually protects. Enumerating each file meant adding a legitimate server
+ * module tripped the checker, which trains people to weaken the rule rather than
+ * respect it. vite.config.js is listed explicitly because it sits at the root.
+ */
+const SERVER_SIDE_PREFIXES = ['server/']
+const SERVER_SIDE = ['vite.config.js']
+const isServerSide = (path) =>
+  SERVER_SIDE.includes(path) || SERVER_SIDE_PREFIXES.some((p) => path.startsWith(p))
 
 /**
  * Files permitted to *name* credentials in prose or config without reading them:
@@ -263,7 +276,7 @@ for (const file of files) {
   }
 
   // --- 2. Credentials read only server-side. -----------------------------
-  if (!SERVER_SIDE.includes(path) && path !== 'scripts/check-repo.mjs') {
+  if (!isServerSide(path) && path !== 'scripts/check-repo.mjs') {
     for (const name of SECRET_NAMES) {
       const read = new RegExp(`(process\\.env|import\\.meta\\.env)\\s*(\\.${name}\\b|\\[['"\`]${name}['"\`]\\])`)
       const m = read.exec(text)
@@ -272,7 +285,7 @@ for (const file of files) {
           path,
           lineOf(text, m.index),
           'client-secret-read',
-          `${name} is read outside the server modules. Credentials belong in ${SERVER_SIDE.join(', ')}.`,
+          `${name} is read outside the server modules. Credentials belong in server/ or vite.config.js.`,
         )
       }
     }
@@ -296,7 +309,7 @@ for (const file of files) {
 
   // Any credential named in a file with no business naming one. Catches a
   // credential leaking into a component's copy or a comment that drifted.
-  if (!MAY_NAME_SECRETS.includes(path)) {
+  if (!MAY_NAME_SECRETS.includes(path) && !isServerSide(path)) {
     for (const name of SECRET_NAMES) {
       if (!name.includes('KEY') && !name.includes('SECRET')) continue
       const m = new RegExp(`\\b${name}\\b`).exec(text)

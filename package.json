@@ -3,14 +3,17 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Prototype for AuricleHealth — a patient-facing site plus an end-to-end demo of one bounded preventive-cardiology expert-opinion visit: booking, AI-assisted intake, a source-linked care packet, a scheduled voice call, and AI-drafted documentation the physician approves. Backed by real Anthropic API and LiveKit calls.",
+  "description": "Prototype for AuricleHealth \u2014 a patient-facing site plus an end-to-end demo of one bounded preventive-cardiology expert-opinion visit: booking, AI-assisted intake, a source-linked care packet, a scheduled voice call, and AI-drafted documentation the physician approves. Backed by real Anthropic API and LiveKit calls.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "node server/prod.js",
     "test": "node --test \"tests/**/*.test.js\"",
     "check": "node scripts/check-repo.mjs",
-    "verify": "npm run check && npm test && npm run build"
+    "verify": "npm run check && npm test && npm run build",
+    "docker:build": "docker build -t auriclehealth:local .",
+    "docker:run": "docker run --rm -p 8080:8080 --env-file .env auriclehealth:local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

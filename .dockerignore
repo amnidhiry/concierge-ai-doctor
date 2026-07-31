@@ -1,0 +1,28 @@
+# Never let a credential into the build context. .env would otherwise be COPY'd
+# by `COPY . .` and baked into an image layer — permanent and, for a public
+# package, world-readable.
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.claude
+node_modules
+dist
+dist-ssr
+.vite
+coverage
+
+# Local tooling and editor noise
+.DS_Store
+*.log
+npm-debug.log*
+.idea
+.vscode
+
+# Not needed to build or run
+Dockerfile
+.dockerignore
+docker-compose.yml
+README.md

@@ -1,0 +1,28 @@
+# Convenience wrapper for running the prototype on a server.
+#
+#   1. cp .env.example .env   and fill in the four values
+#   2. docker compose up -d
+#   3. point a Cloudflare tunnel at http://localhost:8080
+#
+# Secrets are read from .env at RUN time and are never part of the image.
+
+services:
+  auriclehealth:
+    # Published by .github/workflows/docker.yml. Swap for `build: .` to run a
+    # locally-built image instead.
+    image: ghcr.io/amnidhiry/concierge-ai-doctor:main
+    # build: .
+    restart: unless-stopped
+    ports:
+      # Bound to localhost only. The tunnel connects from the same host, so the
+      # container never needs to be reachable from the LAN directly.
+      - '127.0.0.1:8080:8080'
+    environment:
+      PORT: 8080
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY in .env}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      LIVEKIT_URL: ${LIVEKIT_URL:?set LIVEKIT_URL in .env}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY in .env}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET in .env}
+      # Once the tunnel hostname is stable, pin it:
+      # ALLOWED_HOSTS: visits.example.com
