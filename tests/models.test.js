@@ -171,12 +171,12 @@ describe('normalizeDocumentation', () => {
   it('preserves a real payload', () => {
     const doc = normalizeDocumentation({
       clinical_note: {
-        reason_for_visit: 'CAC 240',
-        history_discussed: ['father MI at 68'],
+        subjective: 'Asked what a calcium score of 240 means for him.',
+        objective: ['CAC 240 (as supplied)', 'LDL-C 141 mg/dL (as supplied)'],
+        examination: 'No physical examination was performed; audio-only visit.',
         assessment: 'No assessment stated on the call.',
-        discussion_and_recommendations: ['ApoB and Lp(a) via own GP'],
+        plan: ['ApoB and Lp(a) via own GP', 'Return to own GP with the note.'],
         scope_statement: 'One bounded expert-opinion call.',
-        follow_up: 'Return to own GP with the note.',
       },
       patient_summary: 'We talked about your calcium score.',
       billing_code_suggestion: {
@@ -190,7 +190,9 @@ describe('normalizeDocumentation', () => {
     })
     assert.equal(doc.billing_code_suggestion.code, '99242')
     assert.equal(doc.billing_code_suggestion.requirements_to_confirm.length, 2)
-    assert.equal(doc.clinical_note.history_discussed[0], 'father MI at 68')
+    assert.equal(doc.clinical_note.objective[0], 'CAC 240 (as supplied)')
+    assert.equal(doc.clinical_note.plan.length, 2)
+    assert.match(doc.clinical_note.examination, /No physical examination/)
     assert.equal(doc.documentation_gaps.length, 1)
   })
 
@@ -211,29 +213,28 @@ describe('noteToText', () => {
   })
 
   it('omits sections with no content rather than printing empty headings', () => {
-    const text = noteToText({ reason_for_visit: 'CAC 240', history_discussed: [] })
-    assert.match(text, /REASON FOR VISIT/)
-    assert.doesNotMatch(text, /HISTORY DISCUSSED/)
+    const text = noteToText({ subjective: 'CAC 240 question', objective: [] })
+    assert.match(text, /SUBJECTIVE/)
+    assert.doesNotMatch(text, /OBJECTIVE/)
     assert.doesNotMatch(text, /ASSESSMENT/)
   })
 
   it('renders list sections as bullets and keeps section order', () => {
     const text = noteToText({
-      reason_for_visit: 'r',
-      history_discussed: ['h1', 'h2'],
+      subjective: 's-body',
+      objective: ['h1', 'h2'],
+      examination: 'No physical examination was performed.',
       assessment: 'a',
-      discussion_and_recommendations: ['d1'],
+      plan: ['d1'],
       scope_statement: 's',
-      follow_up: 'f',
     })
     assert.match(text, /- h1\n- h2/)
     const order = [
-      'REASON FOR VISIT',
-      'HISTORY DISCUSSED',
+      'SUBJECTIVE',
+      'OBJECTIVE',
       'ASSESSMENT',
-      'DISCUSSION AND RECOMMENDATIONS',
+      'PLAN',
       'SCOPE OF THIS VISIT',
-      'FOLLOW-UP',
     ].map((h) => text.indexOf(h))
     assert.deepEqual(
       order,
@@ -243,15 +244,39 @@ describe('noteToText', () => {
     assert.ok(order.every((i) => i !== -1))
   })
 
+  it('keeps the no-examination statement inside the Objective section', () => {
+    // Safety-critical ordering: a reader must reach "no examination" before
+    // leaving Objective, not after they have read values as though they were
+    // physical findings.
+    const text = noteToText({
+      subjective: 's',
+      objective: ['LDL-C 139 mg/dL'],
+      examination: 'No physical examination was performed; audio-only visit.',
+      assessment: 'a',
+    })
+    const objIdx = text.indexOf('OBJECTIVE')
+    const examIdx = text.indexOf('No physical examination')
+    const assessIdx = text.indexOf('ASSESSMENT')
+    assert.ok(objIdx !== -1 && examIdx !== -1 && assessIdx !== -1)
+    assert.ok(examIdx > objIdx, 'examination statement must follow the Objective heading')
+    assert.ok(examIdx < assessIdx, 'examination statement must precede Assessment')
+  })
+
+  it('never emits an empty heading line for the unlabelled examination section', () => {
+    const text = noteToText({ examination: 'No physical examination was performed.' })
+    assert.doesNotMatch(text, /^\s*$/m.source ? /^EXAMINATION$/m : /^EXAMINATION$/m)
+    assert.equal(text, 'No physical examination was performed.')
+  })
+
   it('does not leave trailing blank lines', () => {
-    const text = noteToText({ reason_for_visit: 'r' })
+    const text = noteToText({ subjective: 'r' })
     assert.equal(text, text.trimEnd())
   })
 
   it('round-trips through the approval editor without gaining content', () => {
     // The physician edits the flattened text, so flattening must be lossless in
     // the only direction that matters: nothing appears that the note did not say.
-    const note = { reason_for_visit: 'CAC 240', assessment: 'none stated' }
+    const note = { subjective: 'CAC 240', assessment: 'none stated' }
     const text = noteToText(note)
     assert.ok(text.includes('CAC 240'))
     assert.ok(text.includes('none stated'))

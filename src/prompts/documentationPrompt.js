@@ -63,7 +63,7 @@ This service provides one call. The physician cannot prescribe through it and ca
 - Never write the note as though a medication was started, changed, or stopped. If the physician discussed a medication question, document it as discussed, and record what they said the patient should raise with their own clinician.
 - Never write a test as ordered. Document it as recommended for the patient's own clinician to arrange, if that is what the transcript shows.
 - \`scope_statement\` must state plainly what this visit was and what it was not, so nobody reading the note later mistakes it for ongoing care.
-- \`follow_up\` describes what the patient was told to do next — which will normally involve their own clinician, not this service. Do not invent a return appointment.
+- \`plan\` carries what the patient was told to do next — which will normally involve their own clinician, not this service. Do not invent a return appointment.
 
 ${RISK_SCORE_RULE}
 
@@ -76,6 +76,14 @@ ${RISK_SCORE_RULE}
 - Make clear this was a one-off expert-opinion call and that their own doctor continues to manage their care.
 - At most 300 words.
 
+## The note is SOAP-structured
+
+Subjective is what the patient said. Objective is the data that was reviewed — values as supplied, not your interpretation of them.
+
+\`examination\` is not a formality. This was an audio-only call: no physical examination happened, no vital signs were taken, nothing was auscultated or palpated. State that plainly. An Objective section listing lipid values reads, to a later clinician, as though someone examined this patient — and that reader may act on it. Never write an examination finding of any kind.
+
+Assessment is the physician's reasoning as actually voiced on the call. If they did not commit to one, record that they did not rather than supplying it on their behalf. Plan carries the recommendations and the follow-up, framed as things to take to the patient's own clinician.
+
 ## The billing code specifically
 
 Suggest one code. State the code system, the code, its descriptor, why it fits what the transcript shows, and — this is the part that matters — \`requirements_to_confirm\`: everything that would have to be true for the code to be correct which you cannot verify from the transcript alone. Call duration, the physician's own time records, whether documentation requirements are met, and payer-specific rules all belong there.
@@ -84,8 +92,8 @@ If the transcript does not support any code with reasonable confidence, say so i
 
 ## Length
 
-- \`history_discussed\`: at most 6 items.
-- \`discussion_and_recommendations\`: at most 6 items.
+- \`objective\`: at most 6 items.
+- \`plan\`: at most 6 items.
 - \`documentation_gaps\`: at most 6, ranked by how much each would matter.
 
 ## Output
@@ -101,27 +109,34 @@ export const DOCUMENTATION_TOOL = {
     properties: {
       clinical_note: {
         type: 'object',
-        description: 'The clinical note, structured so each part can be checked separately.',
+        description:
+          'The clinical note in SOAP form, structured so each part can be checked separately.',
         properties: {
-          reason_for_visit: {
+          subjective: {
             type: 'string',
-            description: 'Why the patient booked the call, per the transcript.',
+            description:
+              'SUBJECTIVE — why the patient booked the call and what they reported, in their own framing, per the transcript. What the patient said, not what the care packet says.',
           },
-          history_discussed: {
+          objective: {
             type: 'array',
             description:
-              'History and findings actually discussed on the call. Not everything in the care packet — only what the transcript shows was raised.',
+              'OBJECTIVE — the data reviewed on the call: values, scores, and reports actually discussed, each stated as supplied. Reviewed data, not examination findings.',
             items: { type: 'string' },
+          },
+          examination: {
+            type: 'string',
+            description:
+              'An explicit statement that no physical examination was performed, because this was an audio-only visit. Required so a later reader cannot mistake the Objective section for exam findings. Never describe an examination, vital signs taken on the call, or any physical finding — none were possible.',
           },
           assessment: {
             type: 'string',
             description:
-              "The physician's assessment as stated on the call. If they did not state one, say so rather than composing one for them.",
+              "ASSESSMENT — the physician's assessment as stated on the call. If they did not state one, say so plainly rather than composing one for them.",
           },
-          discussion_and_recommendations: {
+          plan: {
             type: 'array',
             description:
-              'What was discussed and what the physician recommended, as recommendations for the patient to take to their own clinician. Never framed as orders or prescriptions.',
+              'PLAN — what was recommended and what happens next, per the transcript. Framed as recommendations to take to the patient\'s own clinician, never as orders or prescriptions. Follow-up belongs here; do not invent a return appointment with this service.',
             items: { type: 'string' },
           },
           scope_statement: {
@@ -129,19 +144,14 @@ export const DOCUMENTATION_TOOL = {
             description:
               'What this visit was and was not: a single bounded expert-opinion call, no prescribing, no test ordering, no ongoing care. Stated so a later reader cannot mistake it for something else.',
           },
-          follow_up: {
-            type: 'string',
-            description:
-              "What the patient was told to do next, per the transcript — normally involving their own clinician. Do not invent a return appointment with this service.",
-          },
         },
         required: [
-          'reason_for_visit',
-          'history_discussed',
+          'subjective',
+          'objective',
+          'examination',
           'assessment',
-          'discussion_and_recommendations',
+          'plan',
           'scope_statement',
-          'follow_up',
         ],
         additionalProperties: false,
       },

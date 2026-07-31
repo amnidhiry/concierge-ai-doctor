@@ -309,12 +309,12 @@ export function normalizeCarePacket(raw) {
 /** Empty-state documentation shape. */
 export const EMPTY_DOCUMENTATION = {
   clinical_note: {
-    reason_for_visit: '',
-    history_discussed: [],
+    subjective: '',
+    objective: [],
+    examination: '',
     assessment: '',
-    discussion_and_recommendations: [],
+    plan: [],
     scope_statement: '',
-    follow_up: '',
   },
   patient_summary: '',
   billing_code_suggestion: {
@@ -333,14 +333,12 @@ export function normalizeDocumentation(raw) {
 
   return {
     clinical_note: {
-      reason_for_visit: asString(raw.clinical_note?.reason_for_visit),
-      history_discussed: asArray(raw.clinical_note?.history_discussed).map(asString).filter(Boolean),
+      subjective: asString(raw.clinical_note?.subjective),
+      objective: asArray(raw.clinical_note?.objective).map(asString).filter(Boolean),
+      examination: asString(raw.clinical_note?.examination),
       assessment: asString(raw.clinical_note?.assessment),
-      discussion_and_recommendations: asArray(raw.clinical_note?.discussion_and_recommendations)
-        .map(asString)
-        .filter(Boolean),
+      plan: asArray(raw.clinical_note?.plan).map(asString).filter(Boolean),
       scope_statement: asString(raw.clinical_note?.scope_statement),
-      follow_up: asString(raw.clinical_note?.follow_up),
     },
     patient_summary: asString(raw.patient_summary),
     billing_code_suggestion: {
@@ -368,19 +366,25 @@ export function noteToText(note) {
   const lines = []
   const section = (label, body) => {
     if (!body) return
-    lines.push(label.toUpperCase(), body, '')
+    if (label) lines.push(label.toUpperCase())
+    lines.push(body, '')
   }
   const listSection = (label, items) => {
     if (!items?.length) return
     lines.push(label.toUpperCase(), ...items.map((i) => `- ${i}`), '')
   }
 
-  section('Reason for visit', note.reason_for_visit)
-  listSection('History discussed', note.history_discussed)
+  // SOAP order. `examination` is folded into Objective rather than given its own
+  // heading, because it belongs to that section clinically — and putting it last
+  // in Objective means a reader reaches "no examination was performed" before
+  // leaving the section, rather than after they have already read values as
+  // though they were findings.
+  section('Subjective', note.subjective)
+  listSection('Objective', note.objective)
+  section('', note.examination)
   section('Assessment', note.assessment)
-  listSection('Discussion and recommendations', note.discussion_and_recommendations)
+  listSection('Plan', note.plan)
   section('Scope of this visit', note.scope_statement)
-  section('Follow-up', note.follow_up)
 
   return lines.join('\n').trimEnd()
 }
