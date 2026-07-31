@@ -18,6 +18,7 @@ export function StartVoiceVisitButton({
   displayName,
   durationMinutes,
   onEndVisit,
+  onTranscriptChange,
   variant = 'primary',
   className = '',
   label = 'Start the call',
@@ -130,6 +131,7 @@ export function StartVoiceVisitButton({
               onClose={close}
               onEndVisit={onEndVisit ? handleEndVisit : undefined}
               durationMinutes={durationMinutes}
+              onTranscriptChange={onTranscriptChange}
             />
 
             {!visit.isActive && (

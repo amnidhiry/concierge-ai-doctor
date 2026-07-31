@@ -29,7 +29,7 @@ Getting this right matters more than any implementation detail below, because th
 | No longitudinal care | One episodic visit; the patient's own doctor manages their care |
 | No prescribing | The physician discusses medication questions; they do not prescribe through this |
 | No test ordering | They say which tests would change things, for the patient's own clinician to arrange |
-| No recording or transcription | See [Simulated transcripts](#simulated-transcripts-there-is-no-speech-to-text) |
+| No recording | Audio is never stored. Transcription is live text only — see [Transcription](#transcription) |
 | No risk-score calculation | See [Risk scores](#risk-scores) |
 
 **No patient price appears anywhere on the site.** There is no payment path in this build and the patient price has not been set, so quoting one would be inventing a commercial fact. `/services` — which used to carry three priced tiers — now redirects to `/the-visit`, a scope explainer with no pricing.
@@ -62,7 +62,7 @@ Open `http://localhost:5173/demo` to run the flow.
 
 ### The Anthropic key
 
-Put it in `.env` as `ANTHROPIC_API_KEY` (gitignored). It is read **server-side only**, by the Vite dev-server middleware in `server/devApi.js`. It is deliberately *not* `VITE_`-prefixed, because Vite inlines `VITE_*` vars into the client bundle where anyone can read them in devtools.
+Put it in `.env` as `ANTHROPIC_API_KEY` (gitignored). It is read **server-side only** — by `server/api.js`, reached either through the Vite plugin in development or `server/prod.js` in the container. It is deliberately *not* `VITE_`-prefixed, because Vite inlines `VITE_*` vars into the client bundle where anyone can read them in devtools.
 
 Two things worth knowing:
 
@@ -135,7 +135,7 @@ Worth being precise about, since the point is demonstrating the real pipeline.
 
 | | |
 |---|---|
-| **The visit transcript** | Always typed or pasted by a human. There is no speech-to-text. See below. |
+| **The visit transcript** | Live browser speech recognition, both sides merged over the data channel. Consumer-grade; correctable by hand. No audio stored. |
 | **Scheduling** | The slot picker offers three plausible times generated from the current clock. There is no calendar, no availability check, and no reminder. |
 | **Sample scheduled visits** | Invented records in `src/domain/mockSchedule.js`, beside the one live case. Marked as samples; a real care packet can be generated for any of them on demand. |
 | **Participant identity** | Both seats are unauthenticated. Anyone with the visit link can join the room. |
@@ -153,29 +153,23 @@ Recording and transcription (both need a retention policy and consent capture be
 
 ---
 
-## Simulated transcripts: there is no speech-to-text
+## Transcription
 
-This is the build's most important honesty boundary, so it gets its own section.
+The call is transcribed live by the **browser's own speech recognition** (`SpeechRecognition`). No third-party STT service, no credential, no cost. Four limitations matter enough to be on screen rather than in this file:
 
-**Nothing transcribes the call.** The LiveKit audio is not recorded, not captured, and not sent anywhere. There is no STT integration, and there is no plan for one in this prototype.
+**It hears one microphone — the local one.** Echo cancellation strips the remote party before recognition sees the signal, so on two separate machines each side transcribes only itself. Each side therefore publishes its recognised text over the LiveKit data channel and the two halves are merged by call time. Without that, the physician's transcript would contain half the conversation — and the one-machine two-tab setup hides the problem, because a single microphone hears everyone in the room.
 
-That leaves the documentation stage — which drafts a note from a transcript — with a problem, and two possible answers:
+**Speaker labels come from whose device spoke**, not from voice identification. There is no diarisation.
 
-1. Fabricate a transcript when the call ends, and let the demo appear to transcribe speech.
-2. Require a human to supply synthetic text, and say so on the screen.
+**Chrome performs recognition on Google's servers.** Audio leaves the machine even though nothing is stored. For anything touching a real consultation that is a disclosure, not a footnote.
 
-**This build does the second.** Specifically:
+**iOS Safari has no `SpeechRecognition` at all.** The call works; transcription does not. The panel says so and the paste path stays available.
 
-- The transcript field is empty until someone types or pastes into it.
-- The panel heading says *"This build does not transcribe the call"* — at the top, not in a footnote.
-- The **server refuses** a documentation request with an empty transcript (`kind: 'no_transcript'`) rather than drafting from the care packet alone. A note built from an invented conversation would demonstrate the exact opposite of what this stage is for.
-- Nothing auto-inserts anything when the call ends.
+Accuracy is consumer-grade — it drops audio under load and mangles drug names. So the captured text is a **draft the physician corrects**, and the transcript panel labels its provenance three ways: `captured live from the call`, `captured, then edited`, or `entered by hand`. A physician about to sign a note needs to know which.
 
-For demonstrability there is one opt-in escape hatch: an **"Insert a synthetic example"** button loads `EXAMPLE_SYNTHETIC_TRANSCRIPT` from `src/domain/mockSchedule.js`. It is authored demo material, its own first line says so, the UI labels the field `synthetic example loaded`, and it is never inserted automatically. It is deliberately imperfect — an inaudible stretch, a dropped topic, a value the patient can't find — because a clean transcript would make the model's gap reporting look like padding when it is the point.
+**No audio is recorded or stored anywhere**, and the transcript text lives in memory for the life of the page. The generated transcript carries a provenance header into the documentation call, so a later reader cannot mistake it for a recording.
 
-The documentation prompt is written to match: it must document only what the transcript establishes, must not carry a care-packet finding into the note as though it was discussed, and must put everything else in `documentation_gaps`.
-
----
+The authored synthetic example remains, behind an explicit button, for demoing the write-up without two people and a working browser.
 
 ## Running the voice call
 
@@ -194,6 +188,15 @@ The demo moment is two browser tabs connecting to each other for real.
 - Dropping video removed the *other* two-tab problem this used to have: a camera that only one tab could hold.
 
 Two physical devices work too, but they need the app reachable over HTTPS or via a tunnel, since `getUserMedia` requires a secure context and a LAN IP over plain HTTP is not one.
+
+### On a phone
+
+Layouts are responsive and the viewport meta is set, so both seats work on a phone — with two caveats worth knowing before you hand someone a link:
+
+- **iOS and Safari block audio until a tap.** The call connects and plays nothing until the user taps. There is a prominent in-call prompt for this; without it a participant sits in a working call hearing silence with no explanation.
+- **iOS Safari cannot transcribe.** No `SpeechRecognition` API. The call is fine, the transcript panel says it is unsupported, and the paste path still works. For live transcription on mobile, use Android Chrome.
+
+Microphone permission is requested from a button press, which is what iOS requires — a permission prompt fired without a user gesture is rejected outright.
 
 ### Token scope
 
@@ -290,6 +293,67 @@ The chat UI follows the [`chatscope/chat-ui-kit-react`](https://github.com/chats
 
 ---
 
+## Deploying (Docker / GHCR)
+
+`vite build` emits static assets only. `server/prod.js` is a dependency-free Node server that serves those assets **and** the API on one listener, so the deployed app can actually reach the model and mint LiveKit tokens — which a static host cannot do.
+
+Dev and production share one implementation: every handler lives in `server/api.js`, which imports nothing from Vite. The Vite plugin and `prod.js` are both thin adapters over it. Two copies would drift, and the drift would surface as a demo that works on a laptop and fails on the server.
+
+### Run it locally
+
+```bash
+npm run build
+npm start            # http://localhost:8080
+```
+
+### Run the image
+
+```bash
+docker compose up -d                 # reads .env, binds 127.0.0.1:8080
+# or
+docker run --rm -p 8080:8080 --env-file .env ghcr.io/amnidhiry/concierge-ai-doctor:main
+```
+
+`.github/workflows/docker.yml` publishes `linux/amd64` and `linux/arm64` to GHCR on push. GHCR authenticates with the built-in `GITHUB_TOKEN`; no PAT needed. The package inherits the repository's visibility, so a public repo means a **public image** — which is exactly why no credential is baked into it.
+
+### Configuration
+
+All runtime, all environment variables. Nothing secret is in the image.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `8080` | Listen port |
+| `HOST` | `0.0.0.0` | Bind address |
+| `STATIC_DIR` | `../dist` | Where the built assets live |
+| `ALLOWED_HOSTS` | *(empty = permissive)* | Comma-separated `Host` allowlist |
+| `ANTHROPIC_API_KEY` | — | Required for intake, packet, documentation |
+| `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | — | Required for the voice call |
+
+`GET /healthz` returns `{ ok, anthropic, livekit, staticDir }` — readiness per dependency, naming no credential. It backs the image's `HEALTHCHECK`.
+
+> **`ANTHROPIC_API_KEY` must actually be set in `.env` on the server.** In development Vite also picks up a shell-exported value, so a blank `ANTHROPIC_API_KEY=` line still works locally. A container gets only what `--env-file` and `-e` pass it, so a blank line means intake, care packet, and documentation all return a config error while LiveKit works — a confusing half-broken state. `GET /healthz` reports `{"anthropic": false}` when this happens.
+
+`ALLOWED_HOSTS` is **permissive by default on purpose**: a Cloudflare quick-tunnel hostname regenerates on every restart, so a mandatory allowlist would lock you out of your own deployment at the worst moment. Set it once the hostname is stable.
+
+### Two people on two machines
+
+This is the reason to deploy at all. Running both sides in one browser produces audio feedback — each tab plays the other's audio into the shared microphone — and the two tabs contend for the same input device.
+
+```bash
+docker compose up -d
+cloudflared tunnel --url http://localhost:8080
+```
+
+Hand the printed HTTPS URL to the second person. HTTPS matters beyond privacy: `getUserMedia` and the Web Speech API both refuse to run in a non-secure context, so a bare LAN IP over HTTP will not work at all.
+
+**The container is a public entry point.** With the tunnel up, anyone holding the URL can hit `/api/*` and spend your Anthropic credits, and `/api/livekit-token` will mint a token for anyone who asks — there is no authentication anywhere in this build. `server/guards.js` limits turns, rate, and a per-process call budget, which is a cost backstop and not access control. Take the tunnel down when you are not testing.
+
+### What the image contains
+
+Multi-stage: the build stage runs `check`, `test`, and `build` — a red suite fails the image rather than producing something that looks deployable. The runtime stage carries production dependencies, `dist/`, `server/`, and `src/prompts/` (the only `src/` path the server imports, verified by tracing the import graph). It runs as the non-root `node` user.
+
+The image is ~313 MB (about 66 MB of that the app layer, the rest the `node:22-alpine` base and Node itself). `npm ci --omit=dev` keeps the React and `livekit-client` packages because they are genuine dependencies of the browser bundle, even though the server never imports them. Trading that for a hand-written runtime manifest would cost lockfile reproducibility, which is the worse deal for a prototype.
+
 ## Automated checks
 
 Deliberately dependency-free: `node:test` and Node built-ins, no test framework, no linter config to maintain. `npm run check` works on a fresh clone before `npm install`.
@@ -333,11 +397,9 @@ Two of these found real bugs while being written, which is the argument for them
 
 ## Next steps
 
-### 1. Deployment (needed before this leaves localhost)
+### 1. Shared state for the guards
 
-**The API is Vite dev-server middleware.** `npm run build` produces a static bundle with **no `/api/*` endpoints at all** — the built site cannot reach the model or mint a LiveKit token. This is the single biggest limitation of the current build.
-
-To deploy, port the handlers in `server/devApi.js` to serverless functions — Vercel `api/*.js`, Netlify functions, or Cloudflare Workers. The handler bodies transfer nearly as-is; only the request/response adapter changes. `server/guards.js` needs a shared store (Redis) at that point, because its state is in-memory and per-process.
+`server/guards.js` keeps its rate-limit and turn counters **in memory, per process**. One container is fine; two replicas behind a load balancer would each enforce the limits separately, so the effective ceiling doubles. A real deployment needs a shared store (Redis) keyed on an authenticated session rather than an IP.
 
 ### 2. Real backend
 
@@ -379,12 +441,15 @@ Out of scope for this pass and genuinely blocking for real use: a BAA with the m
 
 | | |
 |---|---|
-| `npm run dev` | Dev server with the API middleware at `:5173` |
-| `npm run build` | Static production bundle (**no API endpoints** — see Next steps) |
-| `npm run preview` | Serve the build; the middleware is attached here too |
-| `npm run check` | Repository guard rails |
-| `npm test` | Unit tests |
-| `npm run verify` | check → test → build |
+| `npm run dev` | Dev server with the API mounted, at `:5173` |
+| `npm run build` | Static assets into `dist/` |
+| `npm start` | **Production server — built assets plus the API, at `:8080`** |
+| `npm run preview` | Vite's static preview. Dev-only; prefer `npm start` |
+| `npm test` | Node's test runner over `tests/` |
+| `npm run check` | Secret-boundary and obsolete-language checks |
+| `npm run verify` | `check` + `test` + `build` |
+| `npm run docker:build` | Build the image locally |
+| `npm run docker:run` | Run the local image with `.env` |
 
 ## Stack
 

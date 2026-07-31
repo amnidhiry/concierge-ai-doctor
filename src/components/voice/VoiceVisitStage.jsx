@@ -3,6 +3,7 @@ import {
   RoomAudioRenderer,
   useConnectionState,
   useIsSpeaking,
+  useAudioPlayback,
   useLocalParticipant,
   useParticipants,
   useRoomContext,
@@ -10,6 +11,8 @@ import {
 import { ConnectionState } from 'livekit-client'
 import { Button } from '../ui/primitives.jsx'
 import { formatElapsed } from '../../lib/voiceVisit.js'
+import { useSharedTranscript } from '../../hooks/useSharedTranscript.js'
+import { LiveTranscript } from './LiveTranscript.jsx'
 import { VISIT_MINUTES } from '../../domain/models.js'
 
 /**
@@ -137,14 +140,48 @@ function ParticipantRow({ participant, isLocal }) {
   )
 }
 
-export function VoiceVisitStage({ role, notice, onDismissNotice, durationMinutes, onEndVisit }) {
+export function VoiceVisitStage({
+  role,
+  notice,
+  onDismissNotice,
+  durationMinutes,
+  onEndVisit,
+  onTranscriptChange,
+}) {
   const room = useRoomContext()
   const connectionState = useConnectionState()
   const participants = useParticipants()
   const { localParticipant, isMicrophoneEnabled } = useLocalParticipant()
 
+  /**
+   * iOS and Safari block audio playback until a user gesture, so a participant can
+   * join a working call and hear silence with nothing on screen explaining why.
+   * `canPlayAudio` reports that state and `startAudio` is the gesture handler. This
+   * was the single worst mobile defect: the call looked connected and simply had no
+   * sound.
+   */
+  const { canPlayAudio, startAudio } = useAudioPlayback()
+
+  const transcript = useSharedTranscript({ role })
+
   const live = connectionState === ConnectionState.Connected
   const remoteCount = participants.length - 1
+
+  // Hand the merged transcript upward as it grows, so leaving the call — or
+  // navigating away mid-call — cannot lose what was captured.
+  useEffect(() => {
+    onTranscriptChange?.(transcript.transcript)
+  }, [transcript.transcript, onTranscriptChange])
+
+  // Begin transcribing once the call is actually up. Waiting for `live` avoids
+  // firing recognition at a room that is still negotiating.
+  const started = useRef(false)
+  useEffect(() => {
+    if (live && transcript.supported && !started.current) {
+      started.current = true
+      transcript.start()
+    }
+  }, [live, transcript])
 
   /**
    * Leaves the room and, for the physician, declares the visit finished.
@@ -203,6 +240,24 @@ export function VoiceVisitStage({ role, notice, onDismissNotice, durationMinutes
         </div>
       )}
 
+      {/* Audio blocked by the browser's autoplay policy — overwhelmingly iOS.
+          Prominent and unmissable, because the alternative is a call that looks
+          connected and is silent. */}
+      {live && !canPlayAudio && (
+        <div className="border-b border-crimson/40 bg-crimson/20 px-4 py-3">
+          <p className="text-[13px] font-medium leading-relaxed text-sandstone">
+            Your browser is blocking call audio.
+          </p>
+          <p className="mt-1 text-[13px] leading-relaxed text-dune">
+            iOS and Safari require a tap before any audio can play. You are connected — you just
+            cannot hear anything yet.
+          </p>
+          <Button variant="primary" onClick={() => startAudio()} className="mt-3 h-10">
+            Tap to enable audio
+          </Button>
+        </div>
+      )}
+
       <div className="min-h-0 flex-1 overflow-y-auto">
         <p className="border-b border-ink-muted/30 px-4 py-2 font-mono text-[10px] uppercase tracking-label text-dune-deep">
           On the call
@@ -217,6 +272,26 @@ export function VoiceVisitStage({ role, notice, onDismissNotice, durationMinutes
           ))}
         </ul>
 
+        <div className="px-4 py-4">
+          <LiveTranscript
+            supported={transcript.supported}
+            capturing={transcript.capturing}
+            segments={transcript.segments}
+            interim={transcript.interim}
+            error={transcript.error}
+            onStart={transcript.start}
+            onStop={transcript.stop}
+            onDismissError={transcript.dismissError}
+            className="max-h-72"
+          />
+          {transcript.supported && transcript.capturing && transcript.remoteCount === 0 && (
+            <p className="mt-2 text-[11px] leading-relaxed text-dune-deep">
+              Only your own speech is being recognised so far. The other side transcribes itself and
+              sends its text across, so their lines appear once they start transcribing too.
+            </p>
+          )}
+        </div>
+
         {remoteCount === 0 && live && (
           <p className="px-4 py-5 text-[13px] leading-relaxed text-dune-deep">
             {role === 'physician'
@@ -227,9 +302,9 @@ export function VoiceVisitStage({ role, notice, onDismissNotice, durationMinutes
 
         <div className="border-t border-ink-muted/30 px-4 py-4">
           <p className="max-w-prose text-[13px] leading-relaxed text-dune-deep">
-            Nothing on this call is recorded or transcribed. This build has no recording,
-            no speech-to-text, and no screen sharing — the documentation stage requires a
-            transcript to be entered by hand for exactly that reason.
+            Nothing on this call is recorded — no audio is stored, and there is no screen
+            sharing. Transcription is the browser's own speech recognition: consumer-grade, one
+            microphone per device, and it can be corrected or replaced before the write-up.
           </p>
         </div>
       </div>

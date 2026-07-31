@@ -111,8 +111,21 @@ export async function mintToken({ apiKey, apiSecret, roomName, identity, name })
     // "no video" is enforced by the token rather than only by the UI choosing
     // not to ask for a camera.
     canPublishSources: [TrackSource.MICROPHONE],
-    // No data channel, no room admin, no ability to update other participants.
-    canPublishData: false,
+    /**
+     * Data publishing is permitted, narrowly and deliberately.
+     *
+     * Live transcription runs in the browser and hears only the local microphone
+     * — echo cancellation removes the remote party before the recogniser sees the
+     * signal. So on two separate machines each side can transcribe only itself,
+     * and the physician's transcript would hold half the conversation. Each side
+     * publishing its own recognised text over the data channel is what reassembles
+     * the two halves.
+     *
+     * This widens the grant to arbitrary participant-to-participant data messages.
+     * It grants no additional media capability — video and screen share are still
+     * refused by `canPublishSources` above — and no room administration.
+     */
+    canPublishData: true,
     roomAdmin: false,
     roomCreate: false,
   })

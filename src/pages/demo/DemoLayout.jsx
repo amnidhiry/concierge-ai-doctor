@@ -64,8 +64,8 @@ export function DemoLayout() {
           <p className="max-w-3xl text-xs leading-relaxed text-umber">
             <strong className="font-medium text-ink-muted">Prototype.</strong> The care packet and the
             documentation are real Anthropic API calls; the voice call is real WebRTC audio. There is
-            no speech-to-text — the transcript in stage 4 is typed in by hand, and the sample visits
-            beside the live one are invented records. Nothing here is medical advice, nothing is
+            best-effort live transcription from the browser's own speech recognition, which can be
+            corrected or replaced by hand; the sample visits beside the live one are invented records. Nothing here is medical advice, nothing is
             delivered anywhere, and no data survives a page refresh.{' '}
             <strong className="font-medium text-ink-muted">
               Use synthetic case material only — never real patient information.

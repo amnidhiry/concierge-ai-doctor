@@ -160,7 +160,7 @@ export function TheVisit() {
 
             <MetaList className="border-t border-dune">
               <MetaRow label="Format" tone="muted">
-                Voice only. No camera, no recording, no transcription.
+                Voice only. No camera, and no recording — the call is not stored.
               </MetaRow>
               <MetaRow label="Length" tone="muted">
                 {VISIT_MINUTES.min}–{VISIT_MINUTES.max} minutes, scheduled.

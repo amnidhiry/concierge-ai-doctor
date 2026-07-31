@@ -394,12 +394,12 @@ export const REVIEWING_PHYSICIAN = {
  * documentation stage.
  *
  * ── Read this before changing it ───────────────────────────────────────────
- * This build has no speech-to-text. Nothing transcribes the LiveKit call, and
- * nothing ever will in this prototype. This text exists so the documentation
- * stage is demonstrable without an operator having to write 700 words of
- * dialogue first — and it is loaded ONLY when someone clicks the button that
- * says so, into a field labelled as synthetic, on a screen that states there is
- * no transcription.
+ * Live transcription exists now (browser speech recognition), but it is
+ * consumer-grade, needs a browser that supports it, and needs two people actually
+ * talking. This text exists so the documentation stage is demonstrable without
+ * either — and it is loaded ONLY when someone clicks the button that says so, into
+ * a field labelled as synthetic, on a screen that distinguishes captured speech
+ * from an authored example.
  *
  * It is deliberately NOT prefilled, NOT auto-inserted when the call ends, and
  * NOT presented as a record of the call that just happened. Any of those would

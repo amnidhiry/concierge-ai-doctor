@@ -5,13 +5,15 @@ import { EXAMPLE_SYNTHETIC_TRANSCRIPT } from '../../domain/mockSchedule.js'
  * Transcript entry for the documentation stage.
  *
  * ── This component is where the build's biggest honesty boundary lives ─────
- * There is no speech-to-text anywhere in this prototype. The LiveKit call is not
- * recorded and not transcribed. So the documentation stage cannot be fed by the
- * call, and there are exactly two defensible ways to handle that:
+ * The call can now be transcribed live, but only by the browser's own speech
+ * recognition — which is consumer-grade, absent on iOS Safari, and hears one
+ * microphone per device. So a transcript may be good, partial, or missing, and the
+ * two defensible ways to handle that are:
  *
- *   1. Fabricate a transcript when the call ends, and let the demo appear to
- *      transcribe speech.
- *   2. Require a human to supply synthetic text, and say so on the screen.
+ *   1. Present whatever was captured as authoritative, and let the demo imply
+ *      clinical-grade transcription.
+ *   2. Present it as a draft to be corrected, keep the paste path first-class, and
+ *      label what came from where.
  *
  * The first is a lie about the one capability this stage exists to demonstrate,
  * and the audience for a demo like this — physicians evaluating whether to trust
@@ -31,10 +33,12 @@ export function TranscriptInput({ value, source, onChange, disabled }) {
       <div className="border-b border-draft/25 bg-draft-wash px-5 py-4">
         <p className="field-label text-draft-deep">Visit transcript · entered by hand</p>
         <p className="mt-2 max-w-prose text-[15px] font-medium leading-relaxed text-ink">
-          This build does not transcribe the call.
+          Live transcription is best-effort. Check it.
         </p>
         <p className="mt-1.5 max-w-prose text-[13px] leading-relaxed text-ink-muted">
-          There is no speech-to-text, no recording, and nothing listening to the audio. Documentation
+          The call can be transcribed live by the browser's speech recognition, which is
+          consumer-grade and hears one microphone per device. Nothing is recorded and no audio is
+          stored. Anything captured lands here for you to correct. Documentation
           is only ever drafted from text someone types or pastes here. Nothing generates a transcript
           for you, and the endpoint refuses to draft without one — a note built from an invented
           conversation would demonstrate the opposite of what this stage is for.
@@ -49,7 +53,11 @@ export function TranscriptInput({ value, source, onChange, disabled }) {
           id="visit-transcript"
           value={value}
           disabled={disabled}
-          onChange={(e) => onChange(e.target.value, 'pasted')}
+          onChange={(e) =>
+            // Once a human edits captured text it is no longer verbatim capture,
+            // so the label has to stop saying it is.
+            onChange(e.target.value, source === 'captured' ? 'edited' : 'pasted')
+          }
           rows={12}
           placeholder={
             'Paste or write the visit transcript here.\n\nSynthetic material only — never a real consultation, and never real patient information.'
@@ -68,6 +76,19 @@ export function TranscriptInput({ value, source, onChange, disabled }) {
             {source === 'pasted' && chars > 0 && (
               <span className="ml-2 font-mono text-[10px] uppercase tracking-label text-umber-light">
                 · entered by hand
+              </span>
+            )}
+            {/* Captured speech gets its own label. A physician about to sign a note
+                needs to know whether the words came from the call or from an
+                authored script — the three sources warrant different scrutiny. */}
+            {source === 'edited' && chars > 0 && (
+              <span className="ml-2 font-mono text-[10px] uppercase tracking-label text-umber-light">
+                · captured, then edited
+              </span>
+            )}
+            {source === 'captured' && chars > 0 && (
+              <span className="ml-2 font-mono text-[10px] uppercase tracking-label text-pulse">
+                · captured live from the call
               </span>
             )}
           </p>

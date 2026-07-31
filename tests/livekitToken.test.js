@@ -167,6 +167,10 @@ describe('mintToken', () => {
     })
     const { video } = decodePayload(jwt)
     assert.deepEqual(video.canPublishSources, ['microphone'])
+    // Data publishing is granted so each side can share its locally-recognised
+    // transcript text — the only way to reassemble both speakers when the two
+    // parties are on different machines. It must not have widened media access.
+    assert.equal(video.canPublishData, true, 'data channel needed for transcript sharing')
     assert.ok(!video.canPublishSources.includes('camera'))
     assert.ok(!video.canPublishSources.includes('screen_share'))
   })
@@ -182,7 +186,7 @@ describe('mintToken', () => {
     const { video } = decodePayload(jwt)
     // The SDK omits false-valued grants, so absent and false are both acceptable
     // — what matters is that none of these is true.
-    for (const capability of ['roomAdmin', 'roomCreate', 'roomList', 'roomRecord', 'canPublishData']) {
+    for (const capability of ['roomAdmin', 'roomCreate', 'roomList', 'roomRecord']) {
       assert.notEqual(video[capability], true, `${capability} must not be granted`)
     }
     assert.equal(video.canSubscribe, true, 'a participant still needs to hear the other side')

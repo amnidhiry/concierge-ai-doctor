@@ -30,6 +30,7 @@ export function VoiceVisitPage() {
     physician,
     hasIntake,
     endVisit,
+    setTranscript,
     samplePackets,
     runSamplePacket,
     clearSamplePacket,
@@ -44,6 +45,19 @@ export function VoiceVisitPage() {
   if (!hasIntake) return <Navigate to="/demo" replace />
 
   const visitDone = Boolean(liveCase.visit?.endedAt)
+
+  /**
+   * Stores whatever has been recognised so far.
+   *
+   * Called on every change rather than only when the call ends, so a dropped
+   * connection or a mid-call navigation cannot lose the transcript. Marked
+   * `captured` so the documentation stage can tell live-recognised speech from a
+   * pasted example — the two warrant different amounts of trust.
+   */
+  function handleTranscriptChange(text) {
+    if (text?.trim()) setTranscript(text, 'captured')
+  }
+
 
   function handleEndVisit() {
     endVisit()
@@ -69,7 +83,7 @@ export function VoiceVisitPage() {
           <p className="mt-3 text-body-lg leading-relaxed text-umber">
             The physician's seat. Read the packet, take the {VISIT_MINUTES.min}–{VISIT_MINUTES.max}{' '}
             minute call, then write it up. This is real WebRTC audio between two browser contexts —
-            no camera, no recording, no transcription.
+            no camera and no recording, with best-effort live transcription.
           </p>
         </div>
         <div className="rounded-md border border-dune bg-sandstone-raised px-4 py-3">
@@ -124,6 +138,7 @@ export function VoiceVisitPage() {
                       displayName={`${physician.name}, ${physician.credential}`}
                       durationMinutes={liveCase.visit?.durationMinutes}
                       onEndVisit={handleEndVisit}
+                      onTranscriptChange={handleTranscriptChange}
                       label={visitDone ? 'Rejoin the call' : 'Start the call'}
                     />
                   </div>
@@ -147,9 +162,9 @@ export function VoiceVisitPage() {
                   {visitDone ? 'Next: the write-up' : 'When the call is finished'}
                 </p>
                 <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-umber">
-                  Ending the call opens the documentation stage. Because this build has no
-                  speech-to-text, the write-up needs a transcript entered by hand — nothing
-                  transcribes the audio, and no note is drafted without one.
+                  Ending the call opens the documentation stage. Live transcription is
+                  best-effort — read it and correct it, or paste over it entirely. No note is
+                  drafted without a transcript.
                 </p>
                 {/* When the call hasn't happened, this still routes through
                     `endVisit` rather than linking straight to the next page.

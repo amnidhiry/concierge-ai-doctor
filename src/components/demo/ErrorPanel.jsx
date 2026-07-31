@@ -51,7 +51,7 @@ const GUIDANCE = {
   },
   no_transcript: {
     title: 'No transcript to work from',
-    hint: 'This build has no speech-to-text, so documentation is never drafted without a transcript. Paste or write the synthetic visit transcript first, then retry.',
+    hint: 'Documentation is never drafted without a transcript. Transcribe the call live, or paste the synthetic visit transcript first, then retry.',
     retryable: false,
   },
   bad_request: {

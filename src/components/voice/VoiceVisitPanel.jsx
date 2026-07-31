@@ -211,6 +211,7 @@ export function VoiceVisitPanel({
   onClose,
   onEndVisit,
   durationMinutes,
+  onTranscriptChange,
   echoWarning = true,
 }) {
   if (visit.status === 'error') {
@@ -259,6 +260,7 @@ export function VoiceVisitPanel({
           onDismissNotice={visit.dismissNotice}
           durationMinutes={durationMinutes}
           onEndVisit={onEndVisit}
+          onTranscriptChange={onTranscriptChange}
         />
       </LiveKitRoom>
     </div>
